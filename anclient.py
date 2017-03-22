@@ -11,6 +11,7 @@ import socket
 #
 #
 
+
 class Config:
     def __init__(self):
         self.server = ('::', 6068)
@@ -18,6 +19,7 @@ class Config:
 
         self.tlvs = [mkcircuitid_tlv(b"1/1/100"), mkremoteid_tlv(b"DEU.DTAG.0000000060")]
         self.tech_type = Ctx.PON
+
 
 class TLV:
     def __init__(self, t, val):
@@ -29,7 +31,8 @@ class TLV:
         else:
             self.val = val
 
-class Ctx:
+
+class Ctx(object):
     VERSION = 1
 
     #
@@ -94,6 +97,7 @@ class Ctx:
 def tomac(v):
     return "%02x:%02x:%02x:%02x:%02x:%02x" % v
 
+
 def recvall(s, toread):
     buf = bytearray(toread)
     view = memoryview(buf)
@@ -101,10 +105,11 @@ def recvall(s, toread):
         nbytes = s.recv_into(view, toread)
         if nbytes == 0:
             return b''
-        view = view[nbytes:] # slicing views is cheap
+        view = view[nbytes:]    # slicing views is cheap
         toread -= nbytes
 
     return buf
+
 
 def mkadjac(ctx, mtype, timer, m, code):
     totcapslen = 0
@@ -117,8 +122,8 @@ def mkadjac(ctx, mtype, timer, m, code):
     (s1, s2, s3, s4, s5, s6) = ctx.config.sender_name
     (r1, r2, r3, r4, r5, r6) = ctx.receiver_name
     struct.pack_into("!6B6B", b, off,
-        s1, s2, s3, s4, s5, s6,
-        r1, r2, r3, r4, r5, r6)
+                     s1, s2, s3, s4, s5, s6,
+                     r1, r2, r3, r4, r5, r6)
     off += 12
     struct.pack_into("!II", b, off, ctx.sender_port, ctx.receiver_port)
     off += 8
@@ -130,23 +135,28 @@ def mkadjac(ctx, mtype, timer, m, code):
 
     return b
 
+
 def send_adjac(s, ctx, m, code):
     b = mkadjac(ctx, Ctx.ADJACENCY, 0, m, code)
     s.send(b)
+
 
 def send_syn(s, ctx):
     send_adjac(s, ctx, 1, Ctx.SYN)
     ctx.timeout = 25.
     ctx.state = Ctx.SYNSENT
 
+
 def send_ack(s, ctx):
     send_adjac(s, ctx, 0, Ctx.ACK)
     ctx.timeout = 25.
+
 
 def send_synack(s, ctx):
     send_adjac(s, ctx, 0, Ctx.SYNACK)
     ctx.timeout = 25.
     ctx.state = Ctx.SYNRCVD
+
 
 def handle_timeout(s, ctx):
     if ctx.state == Ctx.IDLE:
@@ -157,6 +167,7 @@ def handle_timeout(s, ctx):
         send_ack(s, ctx)
     else:
         pass
+
 
 def handle_syn(s, ctx, var):
     print("SYN rcvd state %d" % ctx.state)
@@ -171,6 +182,7 @@ def handle_syn(s, ctx, var):
     else:
         pass
 
+
 def handle_synack(s, ctx, var):
     if ctx.state == Ctx.SYNSENT:
         # C !C ??
@@ -183,6 +195,7 @@ def handle_synack(s, ctx, var):
         send_ack(s, ctx)
     else:
         pass
+
 
 def handle_ack(s, ctx, var):
     if ctx.state == Ctx.SYNSENT:
@@ -197,12 +210,14 @@ def handle_ack(s, ctx, var):
     else:
         pass
 
+
 def handle_rstack(s, ctx, var):
     if ctx.state == Ctx.SYNSENT:
         pass
     else:
         # TODO, reset link
         pass
+
 
 def handle_adjacency(s, ctx, var, b):
     timer = var >> 8
@@ -223,18 +238,23 @@ def handle_adjacency(s, ctx, var, b):
     else:
         print("unknown code %d" % code)
 
+
 def handle_adjacency_update(s, ctx, var, b):
     res = var >> 12
     code = var & 0xfff
 
+
 def handle_general(s, ctx, var, b):
     pass
 
+
 def mkcircuitid_tlv(circuit_id):
-    return  TLV(0x0001, circuit_id)
+    return TLV(0x0001, circuit_id)
+
 
 def mkremoteid_tlv(remote_id):
-    return  TLV(0x0002, remote_id)
+    return TLV(0x0002, remote_id)
+
 
 def mkgeneral(ctx, message_type, result, result_code, body):
     b = bytearray(4 + 12)
@@ -251,6 +271,7 @@ def mkgeneral(ctx, message_type, result, result_code, body):
 
     return b + body
 
+
 def mktlvs(tlvs):
     blen = 0
     for i in tlvs:
@@ -264,6 +285,7 @@ def mktlvs(tlvs):
 
     return b
 
+
 def send_port_updwn(s, ctx, message_type, tech_type, num_tlvs, tlvs):
     b = bytearray(28)
     off = 20
@@ -275,9 +297,11 @@ def send_port_updwn(s, ctx, message_type, tech_type, num_tlvs, tlvs):
     msg = mkgeneral(ctx, message_type, Ctx.Ignore, Ctx.NoResult, b + tlvs)
     s.send(msg)
 
+
 def send_port_up(s, ctx):
     tlvs = mktlvs(ctx.config.tlvs)
     send_port_updwn(s, ctx, Ctx.PORT_UP, ctx.config.tech_type, len(ctx.config.tlvs), tlvs)
+
 
 def handle(s):
     ctx = Ctx()
