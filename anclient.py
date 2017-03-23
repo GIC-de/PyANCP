@@ -14,10 +14,10 @@ import socket
 
 class Config:
     def __init__(self):
-        self.server = ('::', 6068)
-        self.sender_name = (0, 0, 0,  0, 0, 0)
+        self.server = ('172.30.138.10', 6068)
+        self.sender_name = (1, 2, 3,  4, 5, 6)
 
-        self.tlvs = [mkcircuitid_tlv(b"1/1/100"), mkremoteid_tlv(b"DEU.DTAG.0000000060")]
+        self.tlvs = [mkcircuitid_tlv(b"1/1/100")]
         self.tech_type = Ctx.PON
 
 
@@ -33,7 +33,7 @@ class TLV:
 
 
 class Ctx(object):
-    VERSION = 1
+    VERSION = 50
 
     #
     # message types
@@ -85,11 +85,11 @@ class Ctx(object):
         self.receiver_name = (0, 0, 0,  0, 0, 0)
         self.sender_port = 0
         self.receiver_port = 0
-        self.sender_instance = 1
+        self.sender_instance = 16777217
         self.receiver_instance = 0
         self.timeout = None
         self.state = self.IDLE
-        self.caps = []
+        self.caps = [1]  # 1 = Topo / 4 = OAM
         self.transaction_id = 1
         self.config = Config()
 
@@ -112,7 +112,7 @@ def recvall(s, toread):
 
 
 def mkadjac(ctx, mtype, timer, m, code):
-    totcapslen = 0
+    totcapslen = len(ctx.caps) * 4
     b = bytearray(40 + totcapslen)
     off = 0
     struct.pack_into("!HH", b, off, 0x880c, 36 + totcapslen)
@@ -130,19 +130,23 @@ def mkadjac(ctx, mtype, timer, m, code):
     struct.pack_into("!I", b, off, ctx.sender_instance)
     off += 4
     struct.pack_into("!I", b, off, ctx.receiver_instance)
-    off += 4
-    struct.pack_into("xBH", b, off, len(ctx.caps), totcapslen)
+    off += 5
+    struct.pack_into("!BH", b, off, len(ctx.caps), totcapslen)
+    off += 3
+    for cap in ctx.caps:
+        struct.pack_into("!H", b, off, cap)
+        off += 2
 
     return b
 
 
 def send_adjac(s, ctx, m, code):
-    b = mkadjac(ctx, Ctx.ADJACENCY, 0, m, code)
+    b = mkadjac(ctx, Ctx.ADJACENCY, 250, m, code)
     s.send(b)
 
 
 def send_syn(s, ctx):
-    send_adjac(s, ctx, 1, Ctx.SYN)
+    send_adjac(s, ctx, 0, Ctx.SYN)
     ctx.timeout = 25.
     ctx.state = Ctx.SYNSENT
 
@@ -227,6 +231,8 @@ def handle_adjacency(s, ctx, var, b):
         # ignore, must be 0 as we are the server
         pass
     ctx.receiver_name = struct.unpack_from("!BBBBBB", b, 4)
+    ctx.receiver_instance = struct.unpack_from("!I", b, 24)[0] & 16777215
+    print(ctx.receiver_instance)
     if code == Ctx.SYN:
         handle_syn(s, ctx, var)
     elif code == Ctx.SYNACK:
@@ -256,6 +262,11 @@ def mkremoteid_tlv(remote_id):
     return TLV(0x0002, remote_id)
 
 
+def mklineattr_tlv(dsl_type, up, down):
+
+    return TLV(0x0004, remote_id)
+
+
 def mkgeneral(ctx, message_type, result, result_code, body):
     b = bytearray(4 + 12)
     partition_id = 0
@@ -280,7 +291,7 @@ def mktlvs(tlvs):
     off = 0
     for i in tlvs:
         fmt = "!HH%ds" % len(i.val)
-        struct.pack_into(fmt, b, off, i.t, i.len, i.val)
+        struct.pack_into(fmt, b, off, i.t, i.len, str(i.val))
         off += 4 + len(i.val)
 
     return b
@@ -293,13 +304,15 @@ def send_port_updwn(s, ctx, message_type, tech_type, num_tlvs, tlvs):
     off += 4
     struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
     off += 4
-
+    print("DEBUG")
+    print(len(tlvs))
     msg = mkgeneral(ctx, message_type, Ctx.Ignore, Ctx.NoResult, b + tlvs)
     s.send(msg)
 
 
 def send_port_up(s, ctx):
     tlvs = mktlvs(ctx.config.tlvs)
+    stlvs = mkslvs(ctx.config.stlvs)
     send_port_updwn(s, ctx, Ctx.PORT_UP, ctx.config.tech_type, len(ctx.config.tlvs), tlvs)
 
 
