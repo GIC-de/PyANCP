@@ -1,4 +1,4 @@
-"""Python ANCP Client
+"""ANCP Client
 """
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -55,13 +55,28 @@ OAM = 4
 # HELPER FUNCTIONS AND CALSSES ------------------------------------------------
 
 def tomac(v):
+    """Tuple to MAC Address
+
+    :param v: MAC address
+    :type v: tuple
+    :return: MAC address
+    :rtype: str
+    """
     return "%02x:%02x:%02x:%02x:%02x:%02x" % v
 
 
 # ANCP CLIENT -----------------------------------------------------------------
 
 class Client(object):
+    """ANCP Client
 
+    :param address: ANCP server address
+    :type address: str
+    :param port: ANCP port (default: 6086)
+    :type port: int
+    :param tech_type: tech type (default=DSL)
+    :type tech_type: int
+    """
     def __init__(self, address, port=6068, tech_type=DSL):
         self.address = address
         self.port = port

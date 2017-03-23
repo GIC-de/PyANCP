@@ -1,1 +1,10 @@
 *.pyc
+*.egg-info
+.coverage
+.cache
+.DS_Store
+build
+dist
+docs/_build
+tests/.cache
+tests/__pycache__

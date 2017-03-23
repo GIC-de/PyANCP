@@ -1,11 +1,9 @@
-"""ANCP
+"""ANCP Subscribers
 """
 from __future__ import print_function
 from __future__ import unicode_literals
 import struct
 import logging
-
-__all__ = ["Subscriber"]
 
 log = logging.getLogger("ancp")
 
