@@ -16,8 +16,8 @@ client = Client(address="172.30.138.10")
 client.connect()
 
 time.sleep(2)
-S1 = Subscriber(aci="0.0.0.0 eth 1")
-S2 = Subscriber(aci="0.0.0.0 eth 2")
+S1 = Subscriber(aci="0.0.0.0 eth 1", up=1024, down=16000)
+S2 = Subscriber(aci="0.0.0.0 eth 2", up=2048, down=32000)
 client.port_up(subscriber=S1)
 client.port_up(subscriber=S2)
 try:

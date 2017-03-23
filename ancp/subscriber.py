@@ -31,6 +31,32 @@ TYPE = 0x0091
 STATE = 0x008f
 UP = 0x0081
 DOWN = 0x0082
+MIN_UP = 0x0083
+MIN_DOWN = 0x0084
+ATT_UP = 0x0085
+ATT_DOWN = 0x0086
+MAX_UP = 0x0087
+MAX_DOWN = 0x0088
+ACC_LOOP_ENC = 0x0090
+
+# Access-Loop-Encapsulation
+# DATA LINK
+ATM_AAL5 = 0
+ETHERNET = 1
+# ENCAPSULATION 1
+NA = 0
+UNTAGGED_ETHERNET = 1
+SINGLE_TAGGED_ETHERNET = 2
+DOUBLE_TAGGED_ETHERNET = 3
+# ENCAPSULATION 2
+PPPOA_LLC = 1
+PPPOA_NULL = 2
+IPOA_LLC = 3
+IPOA_Null = 4
+EOAAL5_LLC_FCS = 5
+EOAAL5_LLC = 6
+EOAAL5_NULL_FCS = 7
+EOAAL5_NULL = 8
 
 
 # HELPER FUNCTIONS AND CALSSES ------------------------------------------------
@@ -90,21 +116,56 @@ def mktlvs(tlvs):
     return b
 
 
+def access_loop_enc(data_link, encap1, encap2):
+    tlv = TLV(ACC_LOOP_ENC, 0)
+    tlv.len = 3
+    tlv.off = 4
+    tlv.val = data_link << 24 | encap1 << 16 | encap2 << 8
+    return tlv
+
+
 # ANCP SUBSCRIBER -------------------------------------------------------------
 
 class Subscriber(object):
-    def __init__(self, aci, ari=None, up=0, down=0, state=SHOWTIME):
+    def __init__(self, aci, **kwargs):
         self.aci = aci
-        self.ari = ari
-        self.state = state
-        self.up = up
-        self.down = down
-        self.dsl_type = ADSL2P
+        self.ari = kwargs.get("ari")
+        self.state = kwargs.get("state", SHOWTIME)
+        self.up = kwargs.get("up", 0)
+        self.down = kwargs.get("down", 0)
+        self.min_up = kwargs.get("min_up")
+        self.min_down = kwargs.get("min_down")
+        self.att_up = kwargs.get("att_up")
+        self.att_down = kwargs.get("att_down")
+        self.max_up = kwargs.get("max_up")
+        self.max_down = kwargs.get("max_down")
+        self.dsl_type = kwargs.get("dsl_type", OTHER)
+        self.data_link = kwargs.get("data_link", ETHERNET)
+        self.encap1 = kwargs.get("encap1", DOUBLE_TAGGED_ETHERNET)
+        self.encap2 = kwargs.get("encap2", EOAAL5_LLC)
 
     @property
     def tlvs(self):
-        line_sub_tlvs = [TLV(TYPE, self.dsl_type)]
-        line_sub_tlvs.append(TLV(STATE, self.state))
-
-        tlvs = [TLV(ACI, self.aci), TLV(LINE, line_sub_tlvs)]
+        tlvs = [TLV(ACI, self.aci)]
+        if self.ari is not None:
+            tlvs.append(TLV(ARI, self.ari))
+        # DSL LINE ATTRIBUTES
+        line = [TLV(TYPE, self.dsl_type)]
+        line.append(TLV(STATE, self.state))
+        line.append(TLV(UP, self.up))
+        line.append(TLV(DOWN, self.down))
+        if self.min_up is not None:
+            line.append(TLV(MIN_UP, self.min_up))
+        if self.min_down is not None:
+            line.append(TLV(MIN_DOWN, self.min_down))
+        if self.att_up is not None:
+            line.append(TLV(ATT_UP, self.att_up))
+        if self.att_down is not None:
+            line.append(TLV(ATT_DOWN, self.att_down))
+        if self.max_up is not None:
+            line.append(TLV(MAX_UP, self.max_up))
+        if self.max_down is not None:
+            line.append(TLV(MAX_DOWN, self.max_down))
+        line.append(access_loop_enc(self.data_link, self.encap1, self.encap2))
+        tlvs.append(TLV(LINE, line))
         return (len(tlvs), mktlvs(tlvs))
