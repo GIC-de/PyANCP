@@ -2,7 +2,6 @@
 """
 from __future__ import print_function
 from __future__ import unicode_literals
-from ancp import packet
 from ancp.subscriber import Subscriber
 from datetime import datetime
 from threading import Thread
@@ -12,10 +11,58 @@ import logging
 
 log = logging.getLogger("ancp")
 
+VERSION_RFC = 50
+
+# MESSAGE TYPE
+ADJACENCY = 10
+PORT_MANAGEMENT = 32
+PORT_UP = 80
+PORT_DOWN = 81
+ADJACENCY_UPDATE = 85
+
+# ADJACENCY STATE
+IDLE = 1
+SYNSENT = 2
+SYNRCVD = 3
+ESTAB = 4
+
+# ADJACENCY MESSAGE CODE
+SYN = 1
+SYNACK = 2
+ACK = 3
+RSTACK = 4
+
+# TECH TYPES
+ANY = 0
+PON = 1
+DSL = 5
+
+# RESULT FIELDS
+Ignore = 0x00
+Nack = 0x01
+AckAll = 0x02
+Success = 0x03
+Failure = 0x04
+
+# RESULT CODES
+NoResult = 0x000
+
+# CAPABILITIES
+TOPO = 1
+OAM = 4
+
+
+# HELPER FUNCTIONS AND CALSSES ------------------------------------------------
+
+def tomac(v):
+    return "%02x:%02x:%02x:%02x:%02x:%02x" % v
+
+
+# ANCP CLIENT -----------------------------------------------------------------
 
 class Client(object):
 
-    def __init__(self, address, port=6068, tech_type=packet.DSL):
+    def __init__(self, address, port=6068, tech_type=DSL):
         self.address = address
         self.port = port
 
@@ -24,10 +71,10 @@ class Client(object):
         self._last_syn_time = None
 
         self.established = False
-        self.version = packet.RFC
+        self.version = VERSION_RFC
         self.tech_type = tech_type
-        self.state = packet.IDLE
-        self.capabilities = [packet.TOPO]
+        self.state = IDLE
+        self.capabilities = [TOPO]
         self.transaction_id = 1
         self.sender_name = (1, 2, 3,  4, 5, 6)
         self.sender_instance = 16777217
@@ -48,6 +95,19 @@ class Client(object):
         self._thread.setDaemon(True)
         self._thread.start()
 
+    def disconnect(self):
+        self._send_rstack()
+        self._thread.join()
+        self.socket.close()
+
+    def port_up(self, subscriber):
+        self._port_updown(PORT_UP, subscriber)
+
+    def port_down(self, subscriber):
+        self._port_updown(PORT_DOWN, subscriber)
+
+    # internal methods --------------------------------------------------------
+
     def _handle(self):
         """RX / TX Thread"""
         while True:
@@ -57,7 +117,7 @@ class Client(object):
                 self._handle_timeout()
             else:
                 if len(b) == 0:
-                    log.warning("connection lost with %s " % self._tomac(self.receiver_name))
+                    log.warning("connection lost with %s " % tomac(self.receiver_name))
                     break
                 else:
                     log.debug("received len(b) = %d" % len(b))
@@ -72,32 +132,20 @@ class Client(object):
                     log.debug("rest received len(b) = %d" % len(b))
                     (ver, mtype, var) = struct.unpack_from("!BBH", b, 0)
                     s0 = self.state
-                    if mtype == packet.ADJACENCY:
+                    if mtype == ADJACENCY:
                         self._handle_adjacency(var, b)
-                    elif mtype == packet.ADJACENCY_UPDATE:
+                    elif mtype == ADJACENCY_UPDATE:
                         self._handle_adjacency_update(var, b)
-                    elif mtype == packet.PORT_UP:
+                    elif mtype == PORT_UP:
                         pass
-                    elif mtype == packet.PORT_DOWN:
+                    elif mtype == PORT_DOWN:
                         pass
                     else:
                         self._handle_general(var, b)
-                    if s0 != self.state and self.state == packet.ESTAB and not self.established:
+                    if s0 != self.state and self.state == ESTAB and not self.established:
                         self.established = True
-                        log.info("adjacency established with %s" % self._tomac(self.receiver_name))
+                        log.info("adjacency established with %s" % tomac(self.receiver_name))
 
-    def disconnect(self):
-        self._send_rstack()
-        self._thread.join()
-        self.socket.close()
-
-    def port_up(self, subscriber):
-        self._port_updown(packet.PORT_UP, subscriber)
-
-    def port_down(self, subscriber):
-        self._port_updown(packet.PORT_DOWN, subscriber)
-
-    # internal methods --------------------------------------------------------
     def _port_updown(self, message_type, subscriber):
         if not self.established:
             raise RuntimeError("session not established")
@@ -105,11 +153,7 @@ class Client(object):
             raise ValueError("invalid subscriber")
 
         num_tlvs, tlvs = subscriber.tlvs
-        self._send_port_updwn(packet.PORT_UP, self.tech_type, num_tlvs, tlvs)
-
-    @staticmethod
-    def _tomac(v):
-        return "%02x:%02x:%02x:%02x:%02x:%02x" % v
+        self._send_port_updwn(PORT_UP, self.tech_type, num_tlvs, tlvs)
 
     def _recvall(self, toread):
         buf = bytearray(toread)
@@ -152,29 +196,29 @@ class Client(object):
 
     def _send_adjac(self, m, code):
         log.debug("send adjanecy message with code %s" % (code))
-        b = self._mkadjac(packet.ADJACENCY, self.timer * 10, m, code)
+        b = self._mkadjac(ADJACENCY, self.timer * 10, m, code)
         self.socket.send(b)
 
     def _send_syn(self):
-        self._send_adjac(0, packet.SYN)
-        self.state = packet.SYNSENT
+        self._send_adjac(0, SYN)
+        self.state = SYNSENT
         self._last_syn_time = datetime.now()
 
     def _send_ack(self):
-        self._send_adjac(0, packet.ACK)
+        self._send_adjac(0, ACK)
 
     def _send_synack(self):
-        self._send_adjac(0, packet.SYNACK)
-        self.state = packet.SYNRCVD
+        self._send_adjac(0, SYNACK)
+        self.state = SYNRCVD
 
     def _send_rstack(self):
-        self._send_adjac(0, packet.RSTACK)
-        self.state = packet.SYNRCVD
+        self._send_adjac(0, RSTACK)
+        self.state = SYNRCVD
 
     def _handle_timeout(self):
-        if self.state == packet.SYNSENT:
+        if self.state == SYNSENT:
             self._send_syn()
-        elif self.state == packet.ESTAB:
+        elif self.state == ESTAB:
             # send every self.timer seconds a SYN, ... (keep-alive)
             diff = datetime.now() - self._last_syn_time
             if diff.seconds >= self.timer:
@@ -182,41 +226,41 @@ class Client(object):
 
     def _handle_syn(self):
         log.debug("SYN received with current state %d" % self.state)
-        if self.state == packet.SYNSENT:
+        if self.state == SYNSENT:
             self._send_synack()
-        elif self.state == packet.SYNRCVD:
+        elif self.state == SYNRCVD:
             self._send_synack()
-        elif self.state == packet.ESTAB:
+        elif self.state == ESTAB:
             self._send_ack()
-        elif self.state == packet.IDLE:
+        elif self.state == IDLE:
             self._send_syn()
         else:
             pass
 
     def _handle_synack(self):
         log.debug("SYNACK received with current state %d" % self.state)
-        if self.state == packet.SYNSENT:
+        if self.state == SYNSENT:
             # C !C ??
             self._send_ack()
-            self.state = packet.ESTAB
-        elif self.state == packet.SYNRCVD:
+            self.state = ESTAB
+        elif self.state == SYNRCVD:
             # C !C ??
             self._send_ack()
-        elif self.state == packet.ESTAB:
+        elif self.state == ESTAB:
             self._send_ack()
         else:
             pass
 
     def _handle_ack(self):
         log.debug("ACK received with current state %d" % self.state)
-        if self.state == packet.ESTAB:
+        if self.state == ESTAB:
             self._send_ack()
         else:
-            self.state = packet.ESTAB
+            self.state = ESTAB
 
     def _handle_rstack(self):
         log.debug("RSTACK received with current state %d" % self.state)
-        if self.state == packet.SYNSENT:
+        if self.state == SYNSENT:
             pass
         else:
             # TODO: reset link
@@ -231,13 +275,13 @@ class Client(object):
             pass
         self.receiver_name = struct.unpack_from("!BBBBBB", b, 4)
         self.receiver_instance = struct.unpack_from("!I", b, 24)[0] & 16777215
-        if code == packet.SYN:
+        if code == SYN:
             self._handle_syn()
-        elif code == packet.SYNACK:
+        elif code == SYNACK:
             self._handle_synack()
-        elif code == packet.ACK:
+        elif code == ACK:
             self._handle_ack()
-        elif code == packet.RSTACK:
+        elif code == RSTACK:
             self._handle_rstack()
         else:
             log.warning("unknown code %d" % code)
@@ -271,5 +315,5 @@ class Client(object):
         off += 4
         struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
         off += 4
-        msg = self._mkgeneral(message_type, packet.Nack, packet.NoResult, b + tlvs)
+        msg = self._mkgeneral(message_type, Nack, NoResult, b + tlvs)
         self.socket.send(msg)
