@@ -3,6 +3,7 @@
 from __future__ import print_function
 from __future__ import unicode_literals
 from ancp import packet
+from ancp.subscriber import Subscriber
 from datetime import datetime
 from threading import Thread
 import struct
@@ -12,20 +13,9 @@ import logging
 log = logging.getLogger("ancp")
 
 
-class TLV:
-    def __init__(self, t, val):
-        self.t = t
-        self.len = len(val)
-        padl = 4 - (self.len % 4)
-        if(padl < 4):
-            self.val = val + bytearray(padl)
-        else:
-            self.val = val
-
-
 class Client(object):
 
-    def __init__(self, address, port=6068):
+    def __init__(self, address, port=6068, tech_type=packet.DSL):
         self.address = address
         self.port = port
 
@@ -35,6 +25,7 @@ class Client(object):
 
         self.established = False
         self.version = packet.RFC
+        self.tech_type = tech_type
         self.state = packet.IDLE
         self.capabilities = [packet.TOPO]
         self.transaction_id = 1
@@ -44,12 +35,8 @@ class Client(object):
         self.receiver_name = (0, 0, 0,  0, 0, 0)
         self.receiver_instance = 0
         self.receiver_port = 0
-
+        # TCP SOCKET
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        # TODO: move to subscriber
-        self.tlvs = [self._mkcircuitid_tlv(b"1/1/100")]
-        self.tech_type = packet.PON
 
     def connect(self):
         self.socket.connect((self.address, self.port))
@@ -98,14 +85,28 @@ class Client(object):
                     if s0 != self.state and self.state == packet.ESTAB and not self.established:
                         self.established = True
                         log.info("adjacency established with %s" % self._tomac(self.receiver_name))
-                        self._send_port_up()
 
     def disconnect(self):
         self._send_rstack()
         self._thread.join()
         self.socket.close()
 
-    # internal methods
+    def port_up(self, subscriber):
+        self._port_updown(packet.PORT_UP, subscriber)
+
+    def port_down(self, subscriber):
+        self._port_updown(packet.PORT_DOWN, subscriber)
+
+    # internal methods --------------------------------------------------------
+    def _port_updown(self, message_type, subscriber):
+        if not self.established:
+            raise RuntimeError("session not established")
+        if not isinstance(subscriber, Subscriber):
+            raise ValueError("invalid subscriber")
+
+        num_tlvs, tlvs = subscriber.tlvs
+        self._send_port_updwn(packet.PORT_UP, self.tech_type, num_tlvs, tlvs)
+
     @staticmethod
     def _tomac(v):
         return "%02x:%02x:%02x:%02x:%02x:%02x" % v
@@ -248,14 +249,6 @@ class Client(object):
     def _handle_general(self, var, b):
         pass
 
-    @staticmethod
-    def _mkcircuitid_tlv(circuit_id):
-        return TLV(0x0001, circuit_id)
-
-    @staticmethod
-    def _mkremoteid_tlv(remote_id):
-        return TLV(0x0002, remote_id)
-
     def _mkgeneral(self, message_type, result, result_code, body):
         b = bytearray(4 + 12)
         partition_id = 0
@@ -271,19 +264,6 @@ class Client(object):
         off += 4
         return b + body
 
-    @staticmethod
-    def _mktlvs(tlvs):
-        blen = 0
-        for i in tlvs:
-            blen += 4 + len(i.val)
-        b = bytearray(blen)
-        off = 0
-        for i in tlvs:
-            fmt = "!HH%ds" % len(i.val)
-            struct.pack_into(fmt, b, off, i.t, i.len, str(i.val))
-            off += 4 + len(i.val)
-        return b
-
     def _send_port_updwn(self, message_type, tech_type, num_tlvs, tlvs):
         b = bytearray(28)
         off = 20
@@ -291,9 +271,5 @@ class Client(object):
         off += 4
         struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
         off += 4
-        msg = self._mkgeneral(message_type, packet.Ignore, packet.NoResult, b + tlvs)
+        msg = self._mkgeneral(message_type, packet.Nack, packet.NoResult, b + tlvs)
         self.socket.send(msg)
-
-    def _send_port_up(self):
-        tlvs = self._mktlvs(self.tlvs)
-        self._send_port_updwn(packet.PORT_UP, self.tech_type, len(self.tlvs), tlvs)
