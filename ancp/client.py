@@ -4,6 +4,7 @@ Copyright 2017 Christian Giese <cgiese@juniper.net>
 """
 from __future__ import print_function
 from __future__ import unicode_literals
+from builtins import bytes
 from ancp.subscriber import Subscriber
 from datetime import datetime
 from threading import Thread
@@ -210,7 +211,7 @@ class Client(object):
         off = 0
         struct.pack_into("!HH", b, off, 0x880c, 36 + totcapslen)
         off += 4
-        struct.pack_into("!BBBB", b, off, self.version, mtype, self.timer * 10, (m << 7) | code)
+        struct.pack_into("!BBBB", b, off, self.version, mtype, int(self.timer * 10), (m << 7) | code)
         off += 4
         (s1, s2, s3, s4, s5, s6) = self.sender_name
         (r1, r2, r3, r4, r5, r6) = self.receiver_name

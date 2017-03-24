@@ -16,5 +16,5 @@ def test_subscriber_aci():
     values = struct.unpack_from("!HHccccccccccccc", tlvs, 0)
     assert values[0] == ACI
     assert values[1] == 13
-    aci = "".join(values[2:])
+    aci = "".join([v.decode("utf-8") for v in values[2:]])
     assert aci == "0.0.0.0 eth 0"
