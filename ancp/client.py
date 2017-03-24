@@ -153,19 +153,19 @@ class Client(object):
                 self._handle_timeout()
             else:
                 if len(b) == 0:
-                    log.warning("connection lost with %s " % tomac(self.receiver_name))
+                    log.warning("connection lost with %s ", tomac(self.receiver_name))
                     break
                 else:
-                    log.debug("received len(b) = %d" % len(b))
+                    log.debug("received len(b) = %d", len(b))
                     (id, length) = struct.unpack("!HH", b)
-                    log.debug("message rcvd length field %d" % length)
+                    log.debug("message rcvd length field %d", length)
                     if id != 0x880C:
-                        log.error("incorrect ident 0x%x" % id)
+                        log.error("incorrect ident 0x%x", id)
                         break
                     b = self._recvall(length)
                     if len(b) != length:
                         log.warning("MSG_WAITALL failed")
-                    log.debug("rest received len(b) = %d" % len(b))
+                    log.debug("rest received len(b) = %d", len(b))
                     (ver, mtype, var) = struct.unpack_from("!BBH", b, 0)
                     s0 = self.state
                     if mtype == ADJACENCY:
@@ -180,7 +180,7 @@ class Client(object):
                         self._handle_general(var, b)
                     if s0 != self.state and self.state == ESTAB and not self.established.is_set():
                         self.established.set()
-                        log.info("adjacency established with %s" % tomac(self.receiver_name))
+                        log.info("adjacency established with %s", tomac(self.receiver_name))
         self.established.clear()
 
     def _port_updown(self, message_type, subscriber):
@@ -233,7 +233,7 @@ class Client(object):
 
     def _send_adjac(self, m, code):
         log = logging.getLogger(__name__)
-        log.debug("send adjanecy message with code %s" % (code))
+        log.debug("send adjanecy message with code %s", (code))
         b = self._mkadjac(ADJACENCY, self.timer * 10, m, code)
         self.socket.send(b)
 
@@ -264,7 +264,7 @@ class Client(object):
 
     def _handle_syn(self):
         log = logging.getLogger(__name__)
-        log.debug("SYN received with current state %d" % self.state)
+        log.debug("SYN received with current state %d", self.state)
         if self.state == SYNSENT:
             self._send_synack()
         elif self.state == SYNRCVD:
@@ -278,7 +278,7 @@ class Client(object):
 
     def _handle_synack(self):
         log = logging.getLogger(__name__)
-        log.debug("SYNACK received with current state %d" % self.state)
+        log.debug("SYNACK received with current state %d", self.state)
         if self.state == SYNSENT:
             # C !C ??
             self._send_ack()
@@ -293,7 +293,7 @@ class Client(object):
 
     def _handle_ack(self):
         log = logging.getLogger(__name__)
-        log.debug("ACK received with current state %d" % self.state)
+        log.debug("ACK received with current state %d", self.state)
         if self.state == ESTAB:
             self._send_ack()
         else:
@@ -301,7 +301,7 @@ class Client(object):
 
     def _handle_rstack(self):
         log = logging.getLogger(__name__)
-        log.debug("RSTACK received with current state %d" % self.state)
+        log.debug("RSTACK received with current state %d", self.state)
         if self.state == SYNSENT:
             pass
         else:
