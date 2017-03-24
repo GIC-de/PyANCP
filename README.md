@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/GIC-de/PyANCP.svg?branch=master)](https://travis-ci.org/GIC-de/PyANCP)
+[![Documentation Status](https://readthedocs.org/projects/pyancp/badge/?version=latest)](http://pyancp.readthedocs.io/en/latest/?badge=latest)
 
 # PyANCP
 
