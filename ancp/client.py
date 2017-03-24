@@ -122,6 +122,7 @@ class Client(object):
             self._send_ack()
         else:
             self._send_rstack()
+        self._thread.join(timeout=1.0)
         self.socket.close()
         self.established.clear()
 
