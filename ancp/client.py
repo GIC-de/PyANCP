@@ -313,9 +313,9 @@ class Client(object):
         timer = var >> 8
         m = var & 0x80
         code = var & 0x7f
-        if m == 1:
-            # ignore, must be 0 as we are the server
-            log.warning("received M flag 1 in AN mode")
+        if m == 0:
+            log.error("received M flag 0 in AN mode")
+            raise RuntimeError("Trying to synchronize with other AN")
         self.receiver_name = struct.unpack_from("!BBBBBB", b, 4)
         self.receiver_instance = struct.unpack_from("!I", b, 24)[0] & 16777215
         if code == SYN:
