@@ -12,6 +12,7 @@ from threading import Event
 import struct
 import socket
 import logging
+import collections
 
 
 VERSION_RFC = 50
@@ -125,21 +126,33 @@ class Client(object):
         self.socket.close()
         self.established.clear()
 
-    def port_up(self, subscriber):
+    def port_up(self, subscribers):
         """send port-up message
 
-        :param subscriber: ANCP subscriber
-        :type subscriber: ancp.subscriber.Subscriber
-        """
-        self._port_updown(PORT_UP, subscriber)
+        For backwards compability single value ANCP subscribers are accepted.
 
-    def port_down(self, subscriber):
+        :param subscriber: collection of ANCP subscribers
+        :type subscriber: [ancp.subscriber.Subscriber]
+        """
+        if not isinstance(subscribers, collections.Iterable):
+            subscribers = [subscribers]
+        elif len(subscribers) == 0:
+            raise ValueError("No Subscribers passed")
+        self._port_updown(PORT_UP, subscribers)
+
+    def port_down(self, subscribers):
         """send port-down message
 
-        :param subscriber: ANCP subscriber
-        :type subscriber: ancp.subscriber.Subscriber
+        For backwards compability single value ANCP subscribers are accepted.
+
+        :param subscriber: collection of ANCP subscribers
+        :type subscriber: [ancp.subscriber.Subscriber]
         """
-        self._port_updown(PORT_DOWN, subscriber)
+        if not isinstance(subscribers, collections.Iterable):
+            subscribers = [subscribers]
+        elif len(subscribers) == 0:
+            raise ValueError("No Subscribers passed")
+        self._port_updown(PORT_DOWN, subscribers)
 
     # internal methods --------------------------------------------------------
 
@@ -183,14 +196,11 @@ class Client(object):
                         log.info("adjacency established with %s", tomac(self.receiver_name))
         self.established.clear()
 
-    def _port_updown(self, message_type, subscriber):
+    def _port_updown(self, message_type, subscribers):
         if not self.established.is_set():
             raise RuntimeError("session not established")
-        if not isinstance(subscriber, Subscriber):
-            raise ValueError("invalid subscriber")
 
-        num_tlvs, tlvs = subscriber.tlvs
-        self._send_port_updwn(message_type, self.tech_type, num_tlvs, tlvs)
+        self._send_port_updwn(message_type, self.tech_type, subscribers)
 
     def _recvall(self, toread):
         buf = bytearray(toread)
@@ -351,12 +361,23 @@ class Client(object):
         off += 4
         return b + body
 
-    def _send_port_updwn(self, message_type, tech_type, num_tlvs, tlvs):
-        b = bytearray(28)
-        off = 20
-        struct.pack_into("!xBBx", b, off, message_type, tech_type)
-        off += 4
-        struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
-        off += 4
-        msg = self._mkgeneral(message_type, Nack, NoResult, b + tlvs)
+    def _send_port_updwn(self, message_type, tech_type, subscribers):
+        sb = bytearray()
+        for subscriber in subscribers:
+            try:
+                num_tlvs, tlvs = subscriber.tlvs
+            except:
+                log = logging.getLogger(__name__)
+                log.warning("subscriber is not of type ancp.subscriber.Subscriber: skip")
+                continue
+            b = bytearray(28)
+            off = 20
+            struct.pack_into("!xBBx", b, off, message_type, tech_type)
+            off += 4
+            struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
+            off += 4
+            sb = sb + b + tlvs
+        if sb == 0:
+            raise ValueError("No valid Subscriber passed")
+        msg = self._mkgeneral(message_type, Nack, NoResult, sb)
         self.socket.send(msg)
