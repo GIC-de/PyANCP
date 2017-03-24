@@ -1,10 +1,7 @@
-.. PyANCP documentation master file, created by
-   sphinx-quickstart on Thu Mar 23 22:26:51 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+PyANCP
+======
 
-Welcome to PyANCP's documentation!
-==================================
+Python ANCP (RFC 6320) client and library.
 
 Contents:
 
