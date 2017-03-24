@@ -10,54 +10,62 @@ import logging
 
 log = logging.getLogger("ancp")
 
-# LINE STATE
-SHOWTIME = 1
-IDLE = 2
-SILENT = 3
 
-# DSL TYPE
-ADSL = 1
-ADSL2 = 2
-ADSL2P = 3
-VDSL1 = 4
-VDSL2 = 5
-SDSL = 6
-OTHER = 0
+class LineState(object):
+    SHOWTIME = 1
+    IDLE = 2
+    SILENT = 3
 
-# TLV TYPE
-ACI = 0x0001
-ARI = 0x0002
-LINE = 0x0004
-TYPE = 0x0091
-STATE = 0x008f
-UP = 0x0081
-DOWN = 0x0082
-MIN_UP = 0x0083
-MIN_DOWN = 0x0084
-ATT_UP = 0x0085
-ATT_DOWN = 0x0086
-MAX_UP = 0x0087
-MAX_DOWN = 0x0088
-ACC_LOOP_ENC = 0x0090
+
+class DslType(object):
+    ADSL = 1
+    ADSL2 = 2
+    ADSL2P = 3
+    VDSL1 = 4
+    VDSL2 = 5
+    SDSL = 6
+    OTHER = 0
+
+
+class TlvType(object):
+    ACI = 0x0001
+    ARI = 0x0002
+    LINE = 0x0004
+    TYPE = 0x0091
+    STATE = 0x008f
+    UP = 0x0081
+    DOWN = 0x0082
+    MIN_UP = 0x0083
+    MIN_DOWN = 0x0084
+    ATT_UP = 0x0085
+    ATT_DOWN = 0x0086
+    MAX_UP = 0x0087
+    MAX_DOWN = 0x0088
+    ACC_LOOP_ENC = 0x0090
+
 
 # Access-Loop-Encapsulation
-# DATA LINK
-ATM_AAL5 = 0
-ETHERNET = 1
-# ENCAPSULATION 1
-NA = 0
-UNTAGGED_ETHERNET = 1
-SINGLE_TAGGED_ETHERNET = 2
-DOUBLE_TAGGED_ETHERNET = 3
-# ENCAPSULATION 2
-PPPOA_LLC = 1
-PPPOA_NULL = 2
-IPOA_LLC = 3
-IPOA_Null = 4
-EOAAL5_LLC_FCS = 5
-EOAAL5_LLC = 6
-EOAAL5_NULL_FCS = 7
-EOAAL5_NULL = 8
+class DataLink(object):
+    ATM_AAL5 = 0
+    ETHERNET = 1
+
+
+class Encap1(object):
+    NA = 0
+    UNTAGGED_ETHERNET = 1
+    SINGLE_TAGGED_ETHERNET = 2
+    DOUBLE_TAGGED_ETHERNET = 3
+
+
+class Encap2(object):
+    PPPOA_LLC = 1
+    PPPOA_NULL = 2
+    IPOA_LLC = 3
+    IPOA_Null = 4
+    EOAAL5_LLC_FCS = 5
+    EOAAL5_LLC = 6
+    EOAAL5_NULL_FCS = 7
+    EOAAL5_NULL = 8
 
 
 # HELPER FUNCTIONS AND CALSSES ------------------------------------------------
@@ -119,7 +127,17 @@ def mktlvs(tlvs):
 
 
 def access_loop_enc(data_link, encap1, encap2):
-    tlv = TLV(ACC_LOOP_ENC, 0)
+    """Create the Access Loop Tlv
+
+    :param data_link: The Data link type
+    :type data_link: ancp.subscriber.DataLink
+    :param encap1: The first Encapsulation type
+    :type encap1: ancp.subscriber.Encap1
+    :param encap2: The second Encapsulation type
+    :type encap2: ancp.subscriber.Encap2
+    :rtype: TLV
+    """
+    tlv = TLV(TlvType.ACC_LOOP_ENC, 0)
     tlv.len = 3
     tlv.off = 4
     tlv.val = data_link << 24 | encap1 << 16 | encap2 << 8
@@ -132,7 +150,7 @@ class Subscriber(object):
     def __init__(self, aci, **kwargs):
         self.aci = aci
         self.ari = kwargs.get("ari")
-        self.state = kwargs.get("state", SHOWTIME)
+        self.state = kwargs.get("state", LineState.SHOWTIME)
         self.up = kwargs.get("up", 0)
         self.down = kwargs.get("down", 0)
         self.min_up = kwargs.get("min_up")
@@ -141,33 +159,33 @@ class Subscriber(object):
         self.att_down = kwargs.get("att_down")
         self.max_up = kwargs.get("max_up")
         self.max_down = kwargs.get("max_down")
-        self.dsl_type = kwargs.get("dsl_type", OTHER)
-        self.data_link = kwargs.get("data_link", ETHERNET)
-        self.encap1 = kwargs.get("encap1", DOUBLE_TAGGED_ETHERNET)
-        self.encap2 = kwargs.get("encap2", EOAAL5_LLC)
+        self.dsl_type = kwargs.get("dsl_type", DslType.OTHER)
+        self.data_link = kwargs.get("data_link", DataLink.ETHERNET)
+        self.encap1 = kwargs.get("encap1", Encap1.DOUBLE_TAGGED_ETHERNET)
+        self.encap2 = kwargs.get("encap2", Encap2.EOAAL5_LLC)
 
     @property
     def tlvs(self):
-        tlvs = [TLV(ACI, self.aci)]
+        tlvs = [TLV(TlvType.ACI, self.aci)]
         if self.ari is not None:
-            tlvs.append(TLV(ARI, self.ari))
+            tlvs.append(TLV(TlvType.ARI, self.ari))
         # DSL LINE ATTRIBUTES
-        line = [TLV(TYPE, self.dsl_type)]
+        line = [TLV(TlvType.TYPE, self.dsl_type)]
         line.append(access_loop_enc(self.data_link, self.encap1, self.encap2))
-        line.append(TLV(STATE, self.state))
-        line.append(TLV(UP, self.up))
-        line.append(TLV(DOWN, self.down))
+        line.append(TLV(TlvType.STATE, self.state))
+        line.append(TLV(TlvType.UP, self.up))
+        line.append(TLV(TlvType.DOWN, self.down))
         if self.min_up is not None:
-            line.append(TLV(MIN_UP, self.min_up))
+            line.append(TLV(TlvType.MIN_UP, self.min_up))
         if self.min_down is not None:
-            line.append(TLV(MIN_DOWN, self.min_down))
+            line.append(TLV(TlvType.MIN_DOWN, self.min_down))
         if self.att_up is not None:
-            line.append(TLV(ATT_UP, self.att_up))
+            line.append(TLV(TlvType.ATT_UP, self.att_up))
         if self.att_down is not None:
-            line.append(TLV(ATT_DOWN, self.att_down))
+            line.append(TLV(TlvType.ATT_DOWN, self.att_down))
         if self.max_up is not None:
-            line.append(TLV(MAX_UP, self.max_up))
+            line.append(TLV(TlvType.MAX_UP, self.max_up))
         if self.max_down is not None:
-            line.append(TLV(MAX_DOWN, self.max_down))
-        tlvs.append(TLV(LINE, line))
+            line.append(TLV(TlvType.MAX_DOWN, self.max_down))
+        tlvs.append(TLV(TlvType.LINE, line))
         return (len(tlvs), mktlvs(tlvs))

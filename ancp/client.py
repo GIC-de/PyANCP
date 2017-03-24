@@ -17,43 +17,50 @@ log = logging.getLogger("ancp")
 
 VERSION_RFC = 50
 
-# MESSAGE TYPE
-ADJACENCY = 10
-PORT_MANAGEMENT = 32
-PORT_UP = 80
-PORT_DOWN = 81
-ADJACENCY_UPDATE = 85
 
-# ADJACENCY STATE
-IDLE = 1
-SYNSENT = 2
-SYNRCVD = 3
-ESTAB = 4
+class MessageType(object):
+    ADJACENCY = 10
+    PORT_MANAGEMENT = 32
+    PORT_UP = 80
+    PORT_DOWN = 81
+    ADJACENCY_UPDATE = 85
 
-# ADJACENCY MESSAGE CODE
-SYN = 1
-SYNACK = 2
-ACK = 3
-RSTACK = 4
 
-# TECH TYPES
-ANY = 0
-PON = 1
-DSL = 5
+class AdjacencyState(object):
+    IDLE = 1
+    SYNSENT = 2
+    SYNRCVD = 3
+    ESTAB = 4
 
-# RESULT FIELDS
-Ignore = 0x00
-Nack = 0x01
-AckAll = 0x02
-Success = 0x03
-Failure = 0x04
 
-# RESULT CODES
-NoResult = 0x000
+class MessageCode(object):
+    SYN = 1
+    SYNACK = 2
+    ACK = 3
+    RSTACK = 4
 
-# CAPABILITIES
-TOPO = 1
-OAM = 4
+
+class TechTypes(object):
+    ANY = 0
+    PON = 1
+    DSL = 5
+
+
+class ResultFields(object):
+    Ignore = 0x00
+    Nack = 0x01
+    AckAll = 0x02
+    Success = 0x03
+    Failure = 0x04
+
+
+class ResultCodes(object):
+    NoResult = 0x000
+
+
+class Capabilities(object):
+    TOPO = 1
+    OAM = 4
 
 
 # HELPER FUNCTIONS AND CALSSES ------------------------------------------------
@@ -79,9 +86,9 @@ class Client(object):
     :param port: ANCP port (default: 6086)
     :type port: int
     :param tech_type: tech type (default=DSL)
-    :type tech_type: int
+    :type tech_type: ancp.client.TechTypes
     """
-    def __init__(self, address, port=6068, tech_type=DSL):
+    def __init__(self, address, port=6068, tech_type=TechTypes.DSL):
         self.address = address
         self.port = port
 
@@ -92,8 +99,8 @@ class Client(object):
         self.established = Event()
         self.version = VERSION_RFC
         self.tech_type = tech_type
-        self.state = IDLE
-        self.capabilities = [TOPO]
+        self.state = AdjacencyState.IDLE
+        self.capabilities = [Capabilities.TOPO]
         self.transaction_id = 1
         self.sender_name = (1, 2, 3,  4, 5, 6)
         self.sender_instance = 16777217
@@ -132,7 +139,7 @@ class Client(object):
         :param subscriber: ANCP subscriber
         :type subscriber: ancp.subscriber.Subscriber
         """
-        self._port_updown(PORT_UP, subscriber)
+        self._port_updown(MessageType.PORT_UP, subscriber)
 
     def port_down(self, subscriber):
         """send port-down message
@@ -140,7 +147,7 @@ class Client(object):
         :param subscriber: ANCP subscriber
         :type subscriber: ancp.subscriber.Subscriber
         """
-        self._port_updown(PORT_DOWN, subscriber)
+        self._port_updown(MessageType.PORT_DOWN, subscriber)
 
     # internal methods --------------------------------------------------------
 
@@ -168,13 +175,13 @@ class Client(object):
                     log.debug("rest received len(b) = %d" % len(b))
                     (ver, mtype, var) = struct.unpack_from("!BBH", b, 0)
                     s0 = self.state
-                    if mtype == ADJACENCY:
+                    if mtype == MessageType.ADJACENCY:
                         self._handle_adjacency(var, b)
-                    elif mtype == ADJACENCY_UPDATE:
+                    elif mtype == MessageType.ADJACENCY_UPDATE:
                         self._handle_adjacency_update(var, b)
-                    elif mtype == PORT_UP:
+                    elif mtype == MessageType.PORT_UP:
                         pass
-                    elif mtype == PORT_DOWN:
+                    elif mtype == MessageType.PORT_DOWN:
                         pass
                     else:
                         self._handle_general(var, b)
@@ -233,29 +240,29 @@ class Client(object):
 
     def _send_adjac(self, m, code):
         log.debug("send adjanecy message with code %s" % (code))
-        b = self._mkadjac(ADJACENCY, self.timer * 10, m, code)
+        b = self._mkadjac(MessageType.ADJACENCY, self.timer * 10, m, code)
         self.socket.send(b)
 
     def _send_syn(self):
-        self._send_adjac(0, SYN)
-        self.state = SYNSENT
+        self._send_adjac(0, MessageCode.SYN)
+        self.state = AdjacencyState.SYNSENT
         self._last_syn_time = datetime.now()
 
     def _send_ack(self):
-        self._send_adjac(0, ACK)
+        self._send_adjac(0, MessageCode.ACK)
 
     def _send_synack(self):
-        self._send_adjac(0, SYNACK)
-        self.state = SYNRCVD
+        self._send_adjac(0, MessageCode.SYNACK)
+        self.state = AdjacencyState.SYNRCVD
 
     def _send_rstack(self):
-        self._send_adjac(0, RSTACK)
-        self.state = SYNRCVD
+        self._send_adjac(0, MessageCode.RSTACK)
+        self.state = AdjacencyState.SYNRCVD
 
     def _handle_timeout(self):
-        if self.state == SYNSENT:
+        if self.state == AdjacencyState.SYNSENT:
             self._send_syn()
-        elif self.state == ESTAB:
+        elif self.state == AdjacencyState.ESTAB:
             # send every self.timer seconds a SYN, ... (keep-alive)
             diff = datetime.now() - self._last_syn_time
             if diff.seconds >= self.timer:
@@ -263,41 +270,41 @@ class Client(object):
 
     def _handle_syn(self):
         log.debug("SYN received with current state %d" % self.state)
-        if self.state == SYNSENT:
+        if self.state == AdjacencyState.SYNSENT:
             self._send_synack()
-        elif self.state == SYNRCVD:
+        elif self.state == AdjacencyState.SYNRCVD:
             self._send_synack()
-        elif self.state == ESTAB:
+        elif self.state == AdjacencyState.ESTAB:
             self._send_ack()
-        elif self.state == IDLE:
+        elif self.state == AdjacencyState.IDLE:
             self._send_syn()
         else:
             pass
 
     def _handle_synack(self):
         log.debug("SYNACK received with current state %d" % self.state)
-        if self.state == SYNSENT:
+        if self.state == AdjacencyState.SYNSENT:
             # C !C ??
             self._send_ack()
-            self.state = ESTAB
-        elif self.state == SYNRCVD:
+            self.state = AdjacencyState.ESTAB
+        elif self.state == AdjacencyState.SYNRCVD:
             # C !C ??
             self._send_ack()
-        elif self.state == ESTAB:
+        elif self.state == AdjacencyState.ESTAB:
             self._send_ack()
         else:
             pass
 
     def _handle_ack(self):
         log.debug("ACK received with current state %d" % self.state)
-        if self.state == ESTAB:
+        if self.state == AdjacencyState.ESTAB:
             self._send_ack()
         else:
-            self.state = ESTAB
+            self.state = AdjacencyState.ESTAB
 
     def _handle_rstack(self):
         log.debug("RSTACK received with current state %d" % self.state)
-        if self.state == SYNSENT:
+        if self.state == AdjacencyState.SYNSENT:
             pass
         else:
             # disconnect
@@ -312,13 +319,13 @@ class Client(object):
             pass
         self.receiver_name = struct.unpack_from("!BBBBBB", b, 4)
         self.receiver_instance = struct.unpack_from("!I", b, 24)[0] & 16777215
-        if code == SYN:
+        if code == MessageCode.SYN:
             self._handle_syn()
-        elif code == SYNACK:
+        elif code == MessageCode.SYNACK:
             self._handle_synack()
-        elif code == ACK:
+        elif code == MessageCode.ACK:
             self._handle_ack()
-        elif code == RSTACK:
+        elif code == MessageCode.RSTACK:
             self._handle_rstack()
         else:
             log.warning("unknown code %d" % code)
@@ -352,5 +359,6 @@ class Client(object):
         off += 4
         struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
         off += 4
-        msg = self._mkgeneral(message_type, Nack, NoResult, b + tlvs)
+        msg = self._mkgeneral(message_type, ResultFields.Nack,
+                              ResultCodes.NoResult, b + tlvs)
         self.socket.send(msg)
