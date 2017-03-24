@@ -173,9 +173,9 @@ class Client(object):
                     elif mtype == ADJACENCY_UPDATE:
                         self._handle_adjacency_update(var, b)
                     elif mtype == PORT_UP:
-                        pass
+                        log.warning("received port up in AN mode")
                     elif mtype == PORT_DOWN:
-                        pass
+                        log.warning("received port down in AN mode")
                     else:
                         self._handle_general(var, b)
                     if s0 != self.state and self.state == ESTAB and not self.established.is_set():
@@ -315,7 +315,7 @@ class Client(object):
         code = var & 0x7f
         if m == 1:
             # ignore, must be 0 as we are the server
-            pass
+            log.warning("received M flag 1 in AN mode")
         self.receiver_name = struct.unpack_from("!BBBBBB", b, 4)
         self.receiver_instance = struct.unpack_from("!I", b, 24)[0] & 16777215
         if code == SYN:
