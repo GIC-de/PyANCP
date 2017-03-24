@@ -21,5 +21,5 @@ setup(name='PyANCP',
       packages=find_packages(),
       zip_safe=True,
       include_package_data=True,
-      install_requires=['future']
+      install_requires=['future'],
       )
