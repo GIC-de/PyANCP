@@ -1,15 +1,19 @@
 """ANCP Client
+
+Copyright 2017 Christian Giese <cgiese@juniper.net>
 """
 from __future__ import print_function
 from __future__ import unicode_literals
 from ancp.subscriber import Subscriber
 from datetime import datetime
 from threading import Thread
+from threading import Event
 import struct
 import socket
 import logging
 
 log = logging.getLogger("ancp")
+
 
 VERSION_RFC = 50
 
@@ -85,7 +89,7 @@ class Client(object):
         self.timeout = 1.0  # socket timeout
         self._last_syn_time = None
 
-        self.established = False
+        self.established = Event()
         self.version = VERSION_RFC
         self.tech_type = tech_type
         self.state = IDLE
@@ -101,6 +105,7 @@ class Client(object):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def connect(self):
+        """connect"""
         self.socket.connect((self.address, self.port))
         self.socket.setblocking(True)
         self.socket.settimeout(self.timeout)
@@ -109,16 +114,31 @@ class Client(object):
         self._thread = Thread(target=self._handle, name="handle")
         self._thread.setDaemon(True)
         self._thread.start()
+        self.established.wait()
 
-    def disconnect(self):
-        self._send_rstack()
-        self._thread.join()
+    def disconnect(self, send_ack=False):
+        """disconnect"""
+        if send_ack:
+            self._send_ack()
+        else:
+            self._send_rstack()
         self.socket.close()
+        self.established.clear()
 
     def port_up(self, subscriber):
+        """send port-up message
+
+        :param subscriber: ANCP subscriber
+        :type subscriber: ancp.subscriber.Subscriber
+        """
         self._port_updown(PORT_UP, subscriber)
 
     def port_down(self, subscriber):
+        """send port-down message
+
+        :param subscriber: ANCP subscriber
+        :type subscriber: ancp.subscriber.Subscriber
+        """
         self._port_updown(PORT_DOWN, subscriber)
 
     # internal methods --------------------------------------------------------
@@ -157,18 +177,19 @@ class Client(object):
                         pass
                     else:
                         self._handle_general(var, b)
-                    if s0 != self.state and self.state == ESTAB and not self.established:
-                        self.established = True
+                    if s0 != self.state and self.state == ESTAB and not self.established.is_set():
+                        self.established.set()
                         log.info("adjacency established with %s" % tomac(self.receiver_name))
+        self.established.clear()
 
     def _port_updown(self, message_type, subscriber):
-        if not self.established:
+        if not self.established.is_set():
             raise RuntimeError("session not established")
         if not isinstance(subscriber, Subscriber):
             raise ValueError("invalid subscriber")
 
         num_tlvs, tlvs = subscriber.tlvs
-        self._send_port_updwn(PORT_UP, self.tech_type, num_tlvs, tlvs)
+        self._send_port_updwn(message_type, self.tech_type, num_tlvs, tlvs)
 
     def _recvall(self, toread):
         buf = bytearray(toread)
@@ -278,8 +299,8 @@ class Client(object):
         if self.state == SYNSENT:
             pass
         else:
-            # TODO: reset link
-            pass
+            # disconnect
+            self.disconnect(send_ack=True)
 
     def _handle_adjacency(self, var, b):
         timer = var >> 8
