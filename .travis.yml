@@ -3,6 +3,9 @@ python:
   - "2.7"
   - "3.5"
 # command to install dependencies
-install: "pip install pytest pytest-cov"
+install: "pip install pytest pytest-cov future"
 # command to run tests
 script: python -m pytest -v --durations=10 --cov="ancp"
+
+after_success:
+  coveralls
