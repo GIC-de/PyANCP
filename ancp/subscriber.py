@@ -63,6 +63,8 @@ EOAAL5_NULL = 8
 # HELPER FUNCTIONS AND CALSSES ------------------------------------------------
 
 class TLV(object):
+    __slots__ = ('type', 'val', 'len', 'off')
+
     def __init__(self, t, val):
         self.type = t   # type
         self.val = val  # value
