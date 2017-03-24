@@ -20,7 +20,7 @@ ADSL2 = 2
 ADSL2P = 3
 VDSL1 = 4
 VDSL2 = 5
-SDL = 6
+SDSL = 6
 OTHER = 0
 
 # TLV TYPE
@@ -94,7 +94,7 @@ def mktlvs(tlvs):
     for t in tlvs:
         if isinstance(t.val, list):
             # sub tlvs
-            struct.pack_into("!HH", b, off, t.type, t.len)
+            struct.pack_into("!HH", b, off, t.type, t.off)
             off += 4
             for s in t.val:
                 if isinstance(s.val, int):
@@ -151,6 +151,7 @@ class Subscriber(object):
             tlvs.append(TLV(ARI, self.ari))
         # DSL LINE ATTRIBUTES
         line = [TLV(TYPE, self.dsl_type)]
+        line.append(access_loop_enc(self.data_link, self.encap1, self.encap2))
         line.append(TLV(STATE, self.state))
         line.append(TLV(UP, self.up))
         line.append(TLV(DOWN, self.down))
@@ -166,6 +167,5 @@ class Subscriber(object):
             line.append(TLV(MAX_UP, self.max_up))
         if self.max_down is not None:
             line.append(TLV(MAX_DOWN, self.max_down))
-        line.append(access_loop_enc(self.data_link, self.encap1, self.encap2))
         tlvs.append(TLV(LINE, line))
         return (len(tlvs), mktlvs(tlvs))
