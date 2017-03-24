@@ -82,8 +82,7 @@ class TLV(object):
             self.len = len(val)
             padding = 4 - (self.len % 4)
             if(padding < 4):
-                self.val = val + str(bytearray(padding))
-            self.off = len(self.val)
+                self.off = len(self.val) + padding
 
 
 def mktlvs(tlvs):
