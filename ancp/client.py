@@ -279,7 +279,7 @@ class Client(object):
         elif self.state == AdjacencyState.IDLE:
             self._send_syn()
         else:
-            pass
+            log.warning('Unknown state received in _handle_syn: %d', self.state)
 
     def _handle_synack(self):
         log.debug("SYNACK received with current state %d" % self.state)
@@ -293,7 +293,7 @@ class Client(object):
         elif self.state == AdjacencyState.ESTAB:
             self._send_ack()
         else:
-            pass
+            log.warning('Unknown state received in _handle_synack: %d', self.state)
 
     def _handle_ack(self):
         log.debug("ACK received with current state %d" % self.state)
