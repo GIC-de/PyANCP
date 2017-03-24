@@ -7,8 +7,7 @@ from __future__ import unicode_literals
 from builtins import bytes
 from ancp.subscriber import Subscriber
 from datetime import datetime
-from threading import Thread
-from threading import Event
+from threading import Thread, Event
 import struct
 import socket
 import logging
