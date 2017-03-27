@@ -293,7 +293,7 @@ class Client(object):
         elif self.state == AdjacencyState.ESTAB:
             self._send_ack()
         else:
-            log.warning('Unknown state received in _handle_synack: %d', self.state)
+            log.warning('SYNACK not expected in state: %d', self.state)
 
     def _handle_ack(self):
         log.debug("ACK received with current state %d", self.state)
