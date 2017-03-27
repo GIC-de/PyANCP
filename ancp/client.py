@@ -13,7 +13,7 @@ import struct
 import socket
 import logging
 
-log = logging.getLogger("ancp")
+log = logging.getLogger(__name__)
 
 
 VERSION_RFC = 50
@@ -154,19 +154,19 @@ class Client(object):
                 self._handle_timeout()
             else:
                 if len(b) == 0:
-                    log.warning("connection lost with %s " % tomac(self.receiver_name))
+                    log.warning("connection lost with %s ", tomac(self.receiver_name))
                     break
                 else:
-                    log.debug("received len(b) = %d" % len(b))
+                    log.debug("received len(b) = %d", len(b))
                     (id, length) = struct.unpack("!HH", b)
-                    log.debug("message rcvd length field %d" % length)
+                    log.debug("message rcvd length field %d", length)
                     if id != 0x880C:
-                        log.error("incorrect ident 0x%x" % id)
+                        log.error("incorrect ident 0x%x", id)
                         break
                     b = self._recvall(length)
                     if len(b) != length:
                         log.warning("MSG_WAITALL failed")
-                    log.debug("rest received len(b) = %d" % len(b))
+                    log.debug("rest received len(b) = %d", len(b))
                     (ver, mtype, var) = struct.unpack_from("!BBH", b, 0)
                     s0 = self.state
                     if mtype == ADJACENCY:
@@ -174,14 +174,14 @@ class Client(object):
                     elif mtype == ADJACENCY_UPDATE:
                         self._handle_adjacency_update(var, b)
                     elif mtype == PORT_UP:
-                        pass
+                        log.warning("received port up in AN mode")
                     elif mtype == PORT_DOWN:
-                        pass
+                        log.warning("received port down in AN mode")
                     else:
                         self._handle_general(var, b)
                     if s0 != self.state and self.state == ESTAB and not self.established.is_set():
                         self.established.set()
-                        log.info("adjacency established with %s" % tomac(self.receiver_name))
+                        log.info("adjacency established with %s", tomac(self.receiver_name))
         self.established.clear()
 
     def _port_updown(self, message_type, subscriber):
@@ -233,7 +233,7 @@ class Client(object):
         return b
 
     def _send_adjac(self, m, code):
-        log.debug("send adjanecy message with code %s" % (code))
+        log.debug("send adjanecy message with code %s", (code))
         b = self._mkadjac(ADJACENCY, self.timer * 10, m, code)
         self.socket.send(b)
 
@@ -263,7 +263,7 @@ class Client(object):
                 self._send_syn()
 
     def _handle_syn(self):
-        log.debug("SYN received with current state %d" % self.state)
+        log.debug("SYN received with current state %d", self.state)
         if self.state == SYNSENT:
             self._send_synack()
         elif self.state == SYNRCVD:
@@ -276,7 +276,7 @@ class Client(object):
             pass
 
     def _handle_synack(self):
-        log.debug("SYNACK received with current state %d" % self.state)
+        log.debug("SYNACK received with current state %d", self.state)
         if self.state == SYNSENT:
             # C !C ??
             self._send_ack()
@@ -290,14 +290,14 @@ class Client(object):
             pass
 
     def _handle_ack(self):
-        log.debug("ACK received with current state %d" % self.state)
+        log.debug("ACK received with current state %d", self.state)
         if self.state == ESTAB:
             self._send_ack()
         else:
             self.state = ESTAB
 
     def _handle_rstack(self):
-        log.debug("RSTACK received with current state %d" % self.state)
+        log.debug("RSTACK received with current state %d", self.state)
         if self.state == SYNSENT:
             pass
         else:
@@ -308,9 +308,9 @@ class Client(object):
         timer = var >> 8
         m = var & 0x80
         code = var & 0x7f
-        if m == 1:
-            # ignore, must be 0 as we are the server
-            pass
+        if m == 0:
+            log.error("received M flag 0 in AN mode")
+            raise RuntimeError("Trying to synchronize with other AN")
         self.receiver_name = struct.unpack_from("!BBBBBB", b, 4)
         self.receiver_instance = struct.unpack_from("!I", b, 24)[0] & 16777215
         if code == SYN:
