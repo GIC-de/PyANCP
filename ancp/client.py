@@ -239,7 +239,7 @@ class Client(object):
         return b
 
     def _send_adjac(self, m, code):
-        log.debug("send adjanecy message with code %s" % (code))
+        log.debug("send adjanecy message with code %s", (code))
         b = self._mkadjac(MessageType.ADJACENCY, self.timer * 10, m, code)
         self.socket.send(b)
 
@@ -269,7 +269,7 @@ class Client(object):
                 self._send_syn()
 
     def _handle_syn(self):
-        log.debug("SYN received with current state %d" % self.state)
+        log.debug("SYN received with current state %d", self.state)
         if self.state == AdjacencyState.SYNSENT:
             self._send_synack()
         elif self.state == AdjacencyState.SYNRCVD:
@@ -279,10 +279,10 @@ class Client(object):
         elif self.state == AdjacencyState.IDLE:
             self._send_syn()
         else:
-            log.warning('Unknown state received in _handle_syn: %d', self.state)
+            log.warning('SYN not expected in state: %d', self.state)
 
     def _handle_synack(self):
-        log.debug("SYNACK received with current state %d" % self.state)
+        log.debug("SYNACK received with current state %d", self.state)
         if self.state == AdjacencyState.SYNSENT:
             # C !C ??
             self._send_ack()
@@ -296,14 +296,14 @@ class Client(object):
             log.warning('Unknown state received in _handle_synack: %d', self.state)
 
     def _handle_ack(self):
-        log.debug("ACK received with current state %d" % self.state)
+        log.debug("ACK received with current state %d", self.state)
         if self.state == AdjacencyState.ESTAB:
             self._send_ack()
         else:
             self.state = AdjacencyState.ESTAB
 
     def _handle_rstack(self):
-        log.debug("RSTACK received with current state %d" % self.state)
+        log.debug("RSTACK received with current state %d", self.state)
         if self.state == AdjacencyState.SYNSENT:
             pass
         else:
