@@ -8,7 +8,7 @@ from builtins import bytes
 import struct
 import logging
 
-log = logging.getLogger("ancp")
+log = logging.getLogger(__name__)
 
 
 class LineState(object):
