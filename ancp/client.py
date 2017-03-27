@@ -115,7 +115,15 @@ class Client(object):
         self._thread = Thread(target=self._handle, name="handle")
         self._thread.setDaemon(True)
         self._thread.start()
-        self.established.wait()
+        for _ in xrange(6):
+            if self._thread.is_alive():
+                self.established.wait(1)
+            else:
+                break
+        if self.established.is_set():
+            return True
+        else:
+            return False
 
     def disconnect(self, send_ack=False):
         """disconnect"""
@@ -181,8 +189,10 @@ class Client(object):
                         self._handle_general(var, b)
                     if s0 != self.state and self.state == ESTAB and not self.established.is_set():
                         self.established.set()
+                        print(__name__)
                         log.info("adjacency established with %s" % tomac(self.receiver_name))
         self.established.clear()
+        print("EXIT")
 
     def _port_updown(self, message_type, subscriber):
         if not self.established.is_set():
