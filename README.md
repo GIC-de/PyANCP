@@ -5,6 +5,12 @@
 
 Python ANCP (RFC 6320) client and library.
 
+
+State: __BETA__
+
 ***
 
 Author: Christian Giese and Wolfgang Beck
+
+Contributors:
+- Istvan Ruzman
