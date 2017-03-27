@@ -193,7 +193,7 @@ class Client(object):
                         log.warning("received port down in AN mode")
                     else:
                         self._handle_general(var, b)
-                    if s0 != self.state and self.state == ESTAB and not self.established.is_set():
+                    if s0 != self.state and self.state == AdjacencyState.ESTAB and not self.established.is_set():
                         self.established.set()
                         log.info("adjacency established with %s", tomac(self.receiver_name))
         self.established.clear()
