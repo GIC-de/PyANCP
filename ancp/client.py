@@ -13,6 +13,8 @@ import struct
 import socket
 import logging
 
+log = logging.getLogger(__name__)
+
 
 VERSION_RFC = 50
 
@@ -145,7 +147,6 @@ class Client(object):
 
     def _handle(self):
         """RX / TX Thread"""
-        log = logging.getLogger(__name__)
         while True:
             try:
                 b = self._recvall(4)
@@ -232,7 +233,6 @@ class Client(object):
         return b
 
     def _send_adjac(self, m, code):
-        log = logging.getLogger(__name__)
         log.debug("send adjanecy message with code %s", (code))
         b = self._mkadjac(ADJACENCY, self.timer * 10, m, code)
         self.socket.send(b)
@@ -263,7 +263,6 @@ class Client(object):
                 self._send_syn()
 
     def _handle_syn(self):
-        log = logging.getLogger(__name__)
         log.debug("SYN received with current state %d", self.state)
         if self.state == SYNSENT:
             self._send_synack()
@@ -277,7 +276,6 @@ class Client(object):
             pass
 
     def _handle_synack(self):
-        log = logging.getLogger(__name__)
         log.debug("SYNACK received with current state %d", self.state)
         if self.state == SYNSENT:
             # C !C ??
@@ -292,7 +290,6 @@ class Client(object):
             pass
 
     def _handle_ack(self):
-        log = logging.getLogger(__name__)
         log.debug("ACK received with current state %d", self.state)
         if self.state == ESTAB:
             self._send_ack()
@@ -300,7 +297,6 @@ class Client(object):
             self.state = ESTAB
 
     def _handle_rstack(self):
-        log = logging.getLogger(__name__)
         log.debug("RSTACK received with current state %d", self.state)
         if self.state == SYNSENT:
             pass
@@ -309,7 +305,6 @@ class Client(object):
             self.disconnect(send_ack=True)
 
     def _handle_adjacency(self, var, b):
-        log = logging.getLogger(__name__)
         timer = var >> 8
         m = var & 0x80
         code = var & 0x7f
