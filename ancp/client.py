@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 from builtins import bytes
 from ancp.subscriber import Subscriber
 from datetime import datetime
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 import struct
 import socket
 import logging
@@ -96,6 +96,7 @@ class Client(object):
         self.timer = 25.0   # adjacency timer
         self.timeout = 1.0  # socket timeout
         self._last_syn_time = None
+        self._tx_lock = Lock()
 
         self.established = Event()
         self.version = VERSION_RFC
@@ -210,7 +211,6 @@ class Client(object):
                         self.established.set()
                         log.info("adjacency established with %s", tomac(self.receiver_name))
         self.established.clear()
-        print("EXIT")
 
     def _port_updown(self, message_type, subscribers):
         if not self.established.is_set():
@@ -260,7 +260,8 @@ class Client(object):
     def _send_adjac(self, m, code):
         log.debug("send adjanecy message with code %s", (code))
         b = self._mkadjac(MessageType.ADJACENCY, self.timer * 10, m, code)
-        self.socket.send(b)
+        with self._tx_lock:
+            self.socket.send(b)
 
     def _send_syn(self):
         self._send_adjac(0, MessageCode.SYN)
@@ -389,4 +390,5 @@ class Client(object):
                                    ResultCodes.NoResult, b + tlvs)
         if len(msg) == 0:
             raise ValueError("No valid Subscriber passed")
-        self.socket.send(msg)
+        with self._tx_lock:
+            self.socket.send(msg)
