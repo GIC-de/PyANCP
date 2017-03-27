@@ -154,7 +154,7 @@ class Client(object):
             subscribers = [subscribers]
         elif len(subscribers) == 0:
             raise ValueError("No Subscribers passed")
-        self._port_updown(PORT_UP, subscribers)
+        self._port_updown(MessageType.PORT_UP, subscribers)
 
     def port_down(self, subscribers):
         """send port-down message
@@ -168,7 +168,7 @@ class Client(object):
             subscribers = [subscribers]
         elif len(subscribers) == 0:
             raise ValueError("No Subscribers passed")
-        self._port_updown(PORT_DOWN, subscribers)
+        self._port_updown(MessageType.PORT_DOWN, subscribers)
 
     # internal methods --------------------------------------------------------
 
@@ -372,12 +372,11 @@ class Client(object):
         return b + body
 
     def _send_port_updwn(self, message_type, tech_type, subscribers):
-        sb = bytearray()
+        msg = bytearray()
         for subscriber in subscribers:
             try:
                 num_tlvs, tlvs = subscriber.tlvs
             except:
-                log = logging.getLogger(__name__)
                 log.warning("subscriber is not of type ancp.subscriber.Subscriber: skip")
                 continue
             b = bytearray(28)
@@ -386,8 +385,8 @@ class Client(object):
             off += 4
             struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
             off += 4
-            sb = sb + b + tlvs
-        if sb == 0:
+            msg += self._mkgeneral(message_type, ResultFields.Nack,
+                                   ResultCodes.NoResult, b + tlvs)
+        if len(msg) == 0:
             raise ValueError("No valid Subscriber passed")
-        msg = self._mkgeneral(message_type, Nack, NoResult, sb)
         self.socket.send(msg)
