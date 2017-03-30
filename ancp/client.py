@@ -123,7 +123,7 @@ class Client(object):
         self._thread = Thread(target=self._handle, name="handle")
         self._thread.setDaemon(True)
         self._thread.start()
-        for _ in xrange(6):
+        for _ in range(6):
             if self._thread.is_alive():
                 self.established.wait(1)
             else:
