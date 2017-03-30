@@ -88,10 +88,13 @@ class Client(object):
     :type port: int
     :param tech_type: tech type (default=DSL)
     :type tech_type: ancp.client.TechTypes
+    :param source_address: optional source address
+    :type source_address: str
     """
-    def __init__(self, address, port=6068, tech_type=TechTypes.DSL):
+    def __init__(self, address, port=6068, tech_type=TechTypes.DSL, source_address=None):
         self.address = address
         self.port = port
+        self.source_address = source_address
 
         self.timer = 25.0   # adjacency timer
         self.timeout = 1.0  # socket timeout
@@ -115,7 +118,10 @@ class Client(object):
 
     def connect(self):
         """connect"""
-        self.socket.connect((self.address, self.port))
+        if self.source_address:
+            self.socket = socket.create_connection((self.address, self.port), source_address=(self.source_address, 0))
+        else:
+            self.socket.connect((self.address, self.port))
         self.socket.setblocking(True)
         self.socket.settimeout(self.timeout)
         self._send_syn()
