@@ -31,11 +31,11 @@ class DslType(object):
 
 class TlvType(object):
     "TLV Types"
-    ACI = 0x0001
-    ARI = 0x0002
+    ACI = 0x0001            # Access-Loop-Circuit-ID
+    ARI = 0x0002            # Access-Loop-Remote-ID
+    AACI_ASCII = 0x0003     # Access-Aggregation-Circuit-ID-ASCII
     LINE = 0x0004
-    TYPE = 0x0091
-    STATE = 0x008f
+    AACI_BIN = 0x0006       # Access-Aggregation-Circuit-ID-Binary
     UP = 0x0081
     DOWN = 0x0082
     MIN_UP = 0x0083
@@ -44,7 +44,9 @@ class TlvType(object):
     ATT_DOWN = 0x0086
     MAX_UP = 0x0087
     MAX_DOWN = 0x0088
+    STATE = 0x008f
     ACC_LOOP_ENC = 0x0090
+    TYPE = 0x0091
 
 
 # Access-Loop-Encapsulation
@@ -93,6 +95,10 @@ class TLV(object):
             for sub in val:
                 self.len += 4 + sub.len
                 self.off += 4 + sub.off
+        elif isinstance(val, tuple):
+            # list of int (e.g. for AACI_BIN)
+            self.len = len(val) * 4
+            self.off = self.len
         else:
             # string
             self.len = len(val)
@@ -110,7 +116,14 @@ def mktlvs(tlvs):
     b = bytearray(blen)
     off = 0
     for t in tlvs:
-        if isinstance(t.val, list):
+        if isinstance(t.val, tuple):
+            # list of int (e.g. for AACI_BIN)
+            struct.pack_into("!HH", b, off, t.type, t.len)
+            off += 4
+            for i in t.val:
+                struct.pack_into("!I", b, off, i)
+                off += 4
+        elif isinstance(t.val, list):
             # sub tlvs
             struct.pack_into("!HH", b, off, t.type, t.off)
             off += 4
@@ -126,6 +139,13 @@ def mktlvs(tlvs):
             if isinstance(t.val, int):
                 # int
                 struct.pack_into("!HHI", b, off, t.type, t.len, t.val)
+            elif isinstance(t.val, tuple):
+                # list of int (e.g. for AACI_BIN)
+                struct.pack_into("!HH", b, off, t.type, t.len)
+                off += 4
+                for i in t.val:
+                    struct.pack_into("!I", b, off, i)
+                    off += 4
             else:
                 # string
                 fmt = "!HH%ds" % t.len
@@ -161,6 +181,10 @@ class Subscriber(object):
     :type aci: str
     :param ari: Access-Loop-Remote-ID
     :type ari: str
+    :param aaci_bin: Access-Aggregation-Circuit-ID-Binary
+    :type aaci_bin: int or tuple
+    :param aaci_ascii: Access-Aggregation-Circuit-ID-ASCII
+    :type aaci_ascii: str
     :param state: DSL-Line-State
     :type state: ancp.subscriber.LineState
     :param up: Actual-Net-Data-Rate-Upstream
@@ -191,6 +215,8 @@ class Subscriber(object):
     def __init__(self, aci, **kwargs):
         self.aci = aci
         self.ari = kwargs.get("ari")
+        self.aaci_bin = kwargs.get("aaci_bin")
+        self.aaci_ascii = kwargs.get("aaci_ascii")
         self.state = kwargs.get("state", LineState.SHOWTIME)
         self.up = kwargs.get("up", 0)
         self.down = kwargs.get("down", 0)
@@ -206,16 +232,37 @@ class Subscriber(object):
         self.encap2 = kwargs.get("encap2", Encap2.EOAAL5_LLC)
 
     @property
+    def aaci_bin(self):
+        return self._aaci_bin
+
+    @aaci_bin.setter
+    def aaci_bin(self, value):
+        if value is not None:
+            if isinstance(value, tuple):
+                for v in value:
+                    if not isinstance(v, int):
+                        raise ValueError("invalid value for aaci_bin")
+            elif not isinstance(value, int):
+                raise ValueError("invalid value for aaci_bin")
+        self._aaci_bin = value
+
+    @property
     def tlvs(self):
         tlvs = [TLV(TlvType.ACI, self.aci)]
         if self.ari is not None:
             tlvs.append(TLV(TlvType.ARI, self.ari))
+        if self.aaci_bin is not None:
+            tlvs.append(TLV(TlvType.AACI_BIN, self.aaci_bin))
+        if self.aaci_ascii is not None:
+            tlvs.append(TLV(TlvType.AACI_ASCII, self.aaci_ascii))
         # DSL LINE ATTRIBUTES
         line = [TLV(TlvType.TYPE, self.dsl_type)]
         line.append(access_loop_enc(self.data_link, self.encap1, self.encap2))
         line.append(TLV(TlvType.STATE, self.state))
-        line.append(TLV(TlvType.UP, self.up))
-        line.append(TLV(TlvType.DOWN, self.down))
+        if self.up is not None:
+            line.append(TLV(TlvType.UP, self.up))
+        if self.down is not None:
+            line.append(TLV(TlvType.DOWN, self.down))
         if self.min_up is not None:
             line.append(TLV(TlvType.MIN_UP, self.min_up))
         if self.min_down is not None:

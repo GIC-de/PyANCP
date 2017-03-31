@@ -65,6 +65,8 @@ ANCP subscribers are requires to generate :ref:`Port Up/Down Messages`.
     S1 = Subscriber(aci="0.0.0.0 eth 1", up=1024, down=16000)
 
 All supported line attributes are described in :ref:`ancp/subscriber.py`.
+The argument `aci` is mandatory. Attributes can be updated (e.g. `S1.up=1000`)
+or removed (e.g. `S1.up=None`).
 
 
 Port Up/Down Messages

@@ -3,6 +3,7 @@
 Copyright 2017 Christian Giese <cgiese@juniper.net>
 """
 from ancp.subscriber import *
+import pytest
 
 
 def test_access_loop_enc():
@@ -42,3 +43,22 @@ def test_subscriber_aci():
     assert values[1] == 13
     aci = "".join([v.decode("utf-8") for v in values[2:]])
     assert aci == "0.0.0.0 eth 0"
+
+
+def test_subscriber_aaci_bin():
+    S1 = Subscriber(aci="0.0.0.0 eth 0", aaci_bin=128)
+    len, tlvs = S1.tlvs
+    assert struct.unpack_from("!HHI", tlvs, 20) == (6, 4, 128)
+
+    S2 = Subscriber(aci="0.0.0.0 eth 0", aaci_bin=(128, 7))
+    len, tlvs = S2.tlvs
+    assert struct.unpack_from("!HHII", tlvs, 20) == (6, 8, 128, 7)
+
+
+def test_subscriber_aaci_bin_exception():
+    with pytest.raises(ValueError):
+        S1 = Subscriber(aci="0.0.0.0 eth 0", aaci_bin="128")
+    with pytest.raises(ValueError):
+        S1 = Subscriber(aci="0.0.0.0 eth 0", aaci_bin=[128, 7])
+    with pytest.raises(ValueError):
+        S1 = Subscriber(aci="0.0.0.0 eth 0", aaci_bin=(128, "7"))
