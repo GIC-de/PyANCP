@@ -1,10 +1,10 @@
 [![Build Status](https://travis-ci.org/GIC-de/PyANCP.svg?branch=master)](https://travis-ci.org/GIC-de/PyANCP)
 [![Documentation Status](https://readthedocs.org/projects/pyancp/badge/?version=latest)](http://pyancp.readthedocs.io/en/latest/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/github/GIC-de/PyANCP/badge.svg?branch=master)](https://coveralls.io/github/GIC-de/PyANCP?branch=master)
-[![Version](https://pypip.in/version/PyANCP/badge.svg)
-[![Downloads](https://pypip.in/download/PyANCP/badge.svg)
-[![Python Versions](https://pypip.in/py_versions/PyANCP/badge.svg)
-[![License](https://pypip.in/license/PyANCP/badge.svg)
+[![Version](https://pypip.in/version/PyANCP/badge.svg)](https://pypi.python.org/pypi/PyANCP)
+[![Downloads](https://pypip.in/download/PyANCP/badge.svg)](https://pypi.python.org/pypi/PyANCP)
+[![Python Versions](https://pypip.in/py_versions/PyANCP/badge.svg)](https://pypi.python.org/pypi/PyANCP)
+[![License](https://pypip.in/license/PyANCP/badge.svg)](https://pypi.python.org/pypi/PyANCP)
 
 # PyANCP
 
