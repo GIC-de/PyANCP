@@ -12,12 +12,14 @@ log = logging.getLogger(__name__)
 
 
 class LineState(object):
+    "Line States"
     SHOWTIME = 1
     IDLE = 2
     SILENT = 3
 
 
 class DslType(object):
+    "DSL Types"
     ADSL = 1
     ADSL2 = 2
     ADSL2P = 3
@@ -28,6 +30,7 @@ class DslType(object):
 
 
 class TlvType(object):
+    "TLV Types"
     ACI = 0x0001
     ARI = 0x0002
     LINE = 0x0004
@@ -46,11 +49,13 @@ class TlvType(object):
 
 # Access-Loop-Encapsulation
 class DataLink(object):
+    "Access-Loop-Encapsulation - Data Link"
     ATM_AAL5 = 0
     ETHERNET = 1
 
 
 class Encap1(object):
+    "Access-Loop-Encapsulation - Encapsulation 1"
     NA = 0
     UNTAGGED_ETHERNET = 1
     SINGLE_TAGGED_ETHERNET = 2
@@ -58,6 +63,7 @@ class Encap1(object):
 
 
 class Encap2(object):
+    "Access-Loop-Encapsulation - Encapsulation 2"
     PPPOA_LLC = 1
     PPPOA_NULL = 2
     IPOA_LLC = 3
@@ -149,6 +155,39 @@ def access_loop_enc(data_link, encap1, encap2):
 # ANCP SUBSCRIBER -------------------------------------------------------------
 
 class Subscriber(object):
+    """ANCP Subscriber
+
+    :param aci: Access-Loop-Circuit-ID
+    :type aci: str
+    :param ari: Access-Loop-Remote-ID
+    :type ari: str
+    :param state: DSL-Line-State
+    :type state: ancp.subscriber.LineState
+    :param up: Actual-Net-Data-Rate-Upstream
+    :type up: int
+    :param down: Actual-Net-Data-Rate-Downstream
+    :type down: int
+    :param min_up: Minimum-Net-Data-Rate-Upstream
+    :type min_up: int
+    :param min_down: Minimum-Net-Data-Rate-Downstream
+    :type min_down: int
+    :param att_up: Attainable-Net-Data-Rate-Upstream
+    :type att_up: int
+    :param att_down: Attainable-Net-Data-Rate-Downstream
+    :type att_down: int
+    :param max_up: Maximum-Net-Data-Rate-Upstream
+    :type max_up: int
+    :param max_down: Maximum-Net-Data-Rate-Downstream
+    :type max_down: int
+    :param dsl_type: DSL-Type
+    :type dsl_type: ancp.subscriber.DslType
+    :param data_link: Access-Loop-Encapsulation - Data Link
+    :type data_link: ancp.subscriber.DataLink
+    :param encap1: Access-Loop-Encapsulation - Encapsulation 1
+    :type encap1: ancp.subscriber.Encap1
+    :param encap2: Access-Loop-Encapsulation - Encapsulation 2
+    :type encap2: ancp.subscriber.Encap2
+    """
     def __init__(self, aci, **kwargs):
         self.aci = aci
         self.ari = kwargs.get("ari")

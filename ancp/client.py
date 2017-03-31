@@ -82,21 +82,23 @@ def tomac(v):
 class Client(object):
     """ANCP Client
 
-    :param address: ANCP server address
+    :param address: ANCP server address (IPv4)
     :type address: str
     :param port: ANCP port (default: 6086)
     :type port: int
     :param tech_type: tech type (default=DSL)
     :type tech_type: ancp.client.TechTypes
+    :param timer: adjacency timer (default=25.0)
+    :type timer: int
     :param source_address: optional source address
     :type source_address: str
     """
-    def __init__(self, address, port=6068, tech_type=TechTypes.DSL, source_address=None):
+    def __init__(self, address, port=6068, tech_type=TechTypes.DSL, timer=25.0, source_address=None):
         self.address = address
         self.port = port
         self.source_address = source_address
 
-        self.timer = 25.0   # adjacency timer
+        self.timer = timer  # adjacency timer
         self.timeout = 1.0  # socket timeout
         self._last_syn_time = None
         self._tx_lock = Lock()
