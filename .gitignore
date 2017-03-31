@@ -1,6 +1,5 @@
 *.pyc
 *.egg-info
-.coverage
 .cache
 .DS_Store
 build
