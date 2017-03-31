@@ -1,6 +1,14 @@
-######
+.. image:: https://travis-ci.org/GIC-de/PyANCP.svg?branch=master
+    :target: https://travis-ci.org/GIC-de/PyANCP
+.. image:: https://coveralls.io/repos/github/GIC-de/PyANCP/badge.svg?branch=master
+    :target: https://coveralls.io/github/GIC-de/PyANCP?branch=master
+.. image:: https://readthedocs.org/projects/pyancp/badge/?version=latest
+    :target: http://pyancp.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
+
 PyANCP
-######
+======
 
 Python ANCP (RFC 6320) client and library.
 PyANCP requires Python 2.7 or later, or Python 3.2 or later.
@@ -11,6 +19,7 @@ ANCP Library Example
 --------------------
 
 .. code-block:: python
+
     from ancp.client import Client
     from ancp.subscriber import Subscriber
 
