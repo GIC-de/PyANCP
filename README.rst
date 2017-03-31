@@ -1,11 +1,3 @@
-.. image:: https://travis-ci.org/GIC-de/PyANCP.svg?branch=master
-    :target: https://travis-ci.org/GIC-de/PyANCP
-.. image:: https://coveralls.io/repos/github/GIC-de/PyANCP/badge.svg?branch=master
-    :target: https://coveralls.io/github/GIC-de/PyANCP?branch=master
-.. image:: https://readthedocs.org/projects/pyancp/badge/?version=latest
-    :target: http://pyancp.readthedocs.io/en/latest/?badge=latest
-    :alt: Documentation Status
-
 ######
 PyANCP
 ######
@@ -38,8 +30,6 @@ ANCP Library Example
             # send port-down for ancp subscribers
             client.port_down([S1, S2])
             client.disconnect()
-
-
 
 
 Author: Christian Giese and Wolfgang Beck
