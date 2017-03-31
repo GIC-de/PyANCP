@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/GIC-de/PyANCP/badge.svg?branch=master)](https://coveralls.io/github/GIC-de/PyANCP?branch=master)
 [![Version](https://img.shields.io/pypi/v/PyANCP.svg)](https://pypi.python.org/pypi/PyANCP)
 [![Downloads](https://img.shields.io/pypi/dm/PyANCP.svg)](https://pypi.python.org/pypi/PyANCP)
-[![Python Versions](https://pypip.in/pyversions/PyANCP/badge.svg)](https://pypi.python.org/pypi/PyANCP)
+[![Python Versions](https://pypip.in/pyversions/PyANCP.svg)](https://pypi.python.org/pypi/PyANCP)
 [![License](https://img.shields.io/pypi/l/PyANCP.svg)](https://pypi.python.org/pypi/PyANCP)
 
 
