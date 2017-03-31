@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-"""PyANCP
+"""PyANCP - Python ANCP (RFC 6320) Client and Library
 """
 from setuptools import setup, find_packages
 
-version = '0.1'
+version = '0.1.2'
 
 setup(name='PyANCP',
       version=version,
@@ -12,7 +12,7 @@ setup(name='PyANCP',
       url='https://github.com/GIC-de/PyANCP',
       license='MIT',
       description='Python ANCP (RFC 6320) Client and Library',
-      long_description=open('README.md').read(),
+      long_description=open('README.rst').read(),
       classifiers=[
        'Programming Language :: Python :: 2.7',
        'Programming Language :: Python :: 3.2',
