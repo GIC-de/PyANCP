@@ -231,6 +231,9 @@ class Subscriber(object):
         self.encap1 = kwargs.get("encap1", Encap1.DOUBLE_TAGGED_ETHERNET)
         self.encap2 = kwargs.get("encap2", Encap2.EOAAL5_LLC)
 
+    def __repr__(self):
+        return "Subscriber(%s)" % (self.aci)
+
     @property
     def aaci_bin(self):
         return self._aaci_bin

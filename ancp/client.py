@@ -118,6 +118,12 @@ class Client(object):
         # TCP SOCKET
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    def __repr__(self):
+        if self.source_address:
+            return "Client(%s:%s, %s)" % (self.address, self.port, self.source_address)
+        else:
+            return "Client(%s:%s)" % (self.address, self.port)
+
     def connect(self):
         """connect"""
         if self.source_address:
