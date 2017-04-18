@@ -109,14 +109,21 @@ class Client(object):
         self.state = AdjacencyState.IDLE
         self.capabilities = [Capabilities.TOPO]
         self.transaction_id = 1
-        self.sender_name = (1, 2, 3,  4, 5, 6)
+        if self.source_address:
+            # create sender_name from source_address
+            _sender_name = [int(i) for i in source_address.split(".")]
+            _sender_name.extend([0, 0])
+            self.sender_name = tuple(_sender_name)
+            # TCP socket is created in connect method
+        else:
+            self.sender_name = (1, 2, 3, 4, 5, 6)
+            # create TCP socket
+            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sender_instance = 16777217
         self.sender_port = 0
         self.receiver_name = (0, 0, 0,  0, 0, 0)
         self.receiver_instance = 0
         self.receiver_port = 0
-        # TCP SOCKET
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     def __repr__(self):
         if self.source_address:
