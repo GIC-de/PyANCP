@@ -94,9 +94,9 @@ class Client(object):
     :type source_address: str
     """
     def __init__(self, address, port=6068, tech_type=TechTypes.DSL, timer=25.0, source_address=None):
-        self.address = address
+        self.address = str(address)
         self.port = port
-        self.source_address = source_address
+        self.source_address = str(source_address) if source_address else None
 
         self.timer = timer  # adjacency timer
         self.timeout = 1.0  # socket timeout
