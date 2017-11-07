@@ -103,4 +103,5 @@ def test_disconnect(ancp_client):
     length, code = struct.unpack_from("!HxxxB", msg, 2)
     assert code == MessageCode.RSTACK
     assert ancp_client.established.is_set() == False
+    time.sleep(3.0)
     assert ancp_client.state != AdjacencyState.ESTAB
