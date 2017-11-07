@@ -28,15 +28,32 @@ class DslType(object):
     VDSL2 = 5
     SDSL = 6
     OTHER = 0
+    GFAST = 8           # G.fast
+    VDSL2_Q = 9         # VDSL2 Annex Q
+    SDSL_BOND = 10      # SDSL bonded
+    VDSL2_BOND = 11     # VDSL2 bonded
+    GFAST_BOND = 12     # G.fast bonded
+    VDSL2_Q_BOND = 13   # VDSL2 Annex Q bonded
+
+
+class PonType(object):
+    "PON Access Types"
+    GPON = 1
+    XG_PON1 = 2
+    TWDM_PON = 3
+    XGS_PON = 4
+    WDM_PIN = 5
+    UNKNOWN = 7
+    OTHER = 0
 
 
 class TlvType(object):
     "TLV Types"
-    ACI = 0x0001            # Access-Loop-Circuit-ID
-    ARI = 0x0002            # Access-Loop-Remote-ID
-    AACI_ASCII = 0x0003     # Access-Aggregation-Circuit-ID-ASCII
+    ACI = 0x0001                # Access-Loop-Circuit-ID
+    ARI = 0x0002                # Access-Loop-Remote-ID
+    AACI_ASCII = 0x0003         # Access-Aggregation-Circuit-ID-ASCII
     LINE = 0x0004
-    AACI_BIN = 0x0006       # Access-Aggregation-Circuit-ID-Binary
+    AACI_BIN = 0x0006           # Access-Aggregation-Circuit-ID-Binary
     UP = 0x0081
     DOWN = 0x0082
     MIN_UP = 0x0083
@@ -48,6 +65,22 @@ class TlvType(object):
     STATE = 0x008f
     ACC_LOOP_ENC = 0x0090
     TYPE = 0x0091
+    ETR_UP = 0x009b             # Expected Throughput (ETR) upstream
+    ETR_DOWN = 0x009c           # Expected Throughput (ETR) downstream
+    ATTETR_UP = 0x009d          # Attainable Expected Throughput (ATTETR) upstream
+    ATTETR_DOWN = 0x009e        # Attainable Expected Throughput (ATTETR) downstream
+    GDR_UP = 0x009f             # Gamma data rate (GDR) upstream
+    GDR_DOWN = 0x00a0           # Gamma data rate (GDR) downstream
+    ATTGDR_UP = 0x00a1          # Attainable Gamma data rate (ATTGDR) upstream
+    ATTGDR_DOWN = 0x00a2        # Attainable Gamma data rate (ATTGDR) downstream
+    PON = 0x0012                # PON-Access-Line-Attributes
+    PON_TYPE = 0x0092           # PON-Access-Type
+    ONT_ONU_AVG_DOWN = 0x0093   # ONT/ONU-Average-Data-Rate-Downstream
+    ONT_ONU_PEAK_DOWN = 0x0094  # ONT/ONU-Peak-Data-Rate-Downstream
+    ONT_ONU_MAX_UP = 0x0095     # ONT/ONU-Maximum-Data-Rate-Upstream
+    ONT_ONU_ASS_UP = 0x0096     # ONT/ONU-Assured-Data-Rate-Upstream
+    PON_MAX_UP = 0x0097         # PON-Tree-Maximum-Data-Rate-Upstream
+    PON_MAX_DOWN = 0x0098       # PON-Tree-Maximum-Data-Rate-Downstream
 
 
 # Access-Loop-Encapsulation
@@ -178,6 +211,8 @@ def access_loop_enc(data_link, encap1, encap2):
 class Subscriber(object):
     """ANCP Subscriber
 
+    The parameters `dsl_type` and `pon_type` are exclusive.
+
     :param aci: Access-Loop-Circuit-ID
     :type aci: str
     :param ari: Access-Loop-Remote-ID
@@ -186,51 +221,116 @@ class Subscriber(object):
     :type aaci_bin: int or tuple
     :param aaci_ascii: Access-Aggregation-Circuit-ID-ASCII
     :type aaci_ascii: str
-    :param state: DSL-Line-State
+
+    **DSL Line Attributes:**
+
+    The following parameters are valid for DSL subscribers only.
+
+    :param state: DSL-Line-State (default: SHOWTIME)
     :type state: ancp.subscriber.LineState
-    :param up: Actual-Net-Data-Rate-Upstream
+    :param up: Actual-Net-Data-Rate-Upstream (kbits/s)
     :type up: int
-    :param down: Actual-Net-Data-Rate-Downstream
+    :param down: Actual-Net-Data-Rate-Downstream (kbits/s)
     :type down: int
-    :param min_up: Minimum-Net-Data-Rate-Upstream
+    :param min_up: Minimum-Net-Data-Rate-Upstream (kbits/s)
     :type min_up: int
-    :param min_down: Minimum-Net-Data-Rate-Downstream
+    :param min_down: Minimum-Net-Data-Rate-Downstream (kbits/s)
     :type min_down: int
-    :param att_up: Attainable-Net-Data-Rate-Upstream
+    :param att_up: Attainable-Net-Data-Rate-Upstream (kbits/s)
     :type att_up: int
-    :param att_down: Attainable-Net-Data-Rate-Downstream
+    :param att_down: Attainable-Net-Data-Rate-Downstream (kbits/s)
     :type att_down: int
-    :param max_up: Maximum-Net-Data-Rate-Upstream
+    :param max_up: Maximum-Net-Data-Rate-Upstream (kbits/s)
     :type max_up: int
-    :param max_down: Maximum-Net-Data-Rate-Downstream
+    :param max_down: Maximum-Net-Data-Rate-Downstream (kbits/s)
     :type max_down: int
-    :param dsl_type: DSL-Type
+    :param dsl_type: DSL-Type (default: OTHER)
     :type dsl_type: ancp.subscriber.DslType
-    :param data_link: Access-Loop-Encapsulation - Data Link
+    :param data_link: Access-Loop-Encapsulation - Data Link (default: ETHERNET)
     :type data_link: ancp.subscriber.DataLink
-    :param encap1: Access-Loop-Encapsulation - Encapsulation 1
+    :param encap1: Access-Loop-Encapsulation - Encapsulation 1 (default: DOUBLE_TAGGED_ETHERNET)
     :type encap1: ancp.subscriber.Encap1
-    :param encap2: Access-Loop-Encapsulation - Encapsulation 2
+    :param encap2: Access-Loop-Encapsulation - Encapsulation 2 (default: EOAAL5_LLC)
     :type encap2: ancp.subscriber.Encap2
+
+    **Additional DSL Line Attributes for G.Fast (draft-ietf-ancp-protocol-access-extension-06):**
+
+    :param etr_up: Expected Throughput (ETR) upstream (kbits/s)
+    :type etr_up: int
+    :param etr_down: Expected Throughput (ETR) downstream (kbits/s)
+    :type etr_down: int
+    :param attetr_up: Attainable Expected Throughput (ATTETR) upstream (kbits/s)
+    :type attetr_up: int
+    :param attetr_down: Attainable Expected Throughput (ATTETR) downstream (kbits/s)
+    :type attetr_down: int
+    :param gdr_up: Gamma data rate (GDR) upstream (kbits/s)
+    :type gdr_up: int
+    :param gdr_down: Gamma data rate (GDR) downstream (kbits/s)
+    :type gdr_down: int
+    :param attgdr_up: Attainable Gamma data rate (ATTGDR) upstream (kbits/s)
+    :type attgdr_up: int
+    :param attgdr_down: Attainable Gamma data rate (ATTGDR) downstream (kbits/s)
+    :type attgdr_down: int
+
+    **PON Line Attributes (draft-ietf-ancp-protocol-access-extension-06):**
+
+    The following parameters are valid for PON subscribers only. The parameter
+    `pon_type` must be set to create a PON subscriber.
+
+    :param pon_type: PON-Access-Type
+    :type pon_type: ancp.subscriber.PonType
+    :param ont_onu_avg_down: ONT/ONU-Average-Data-Rate-Downstream (kbits/s)
+    :type ont_onu_avg_down: int
+    :param ont_onu_peak_down: ONT/ONU-Peak-Data-Rate-Downstream (kbits/s)
+    :type ont_onu_peak_down: int
+    :param ont_onu_max_up: ONT/ONU-Maximum-Data-Rate-Upstream (kbits/s)
+    :type ont_onu_max_up: int
+    :param ont_onu_ass_up: ONT/ONU-Assured-Data-Rate-Upstream (kbits/s)
+    :type ont_onu_ass_up: int
+    :param pon_max_up: PON-Tree-Maximum-Data-Rate-Upstream (kbits/s)
+    :type pon_max_up: int
+    :param pon_max_down: PON-Tree-Maximum-Data-Rate-Downstream (kbits/s)
+    :type pon_max_down: int
     """
     def __init__(self, aci, **kwargs):
         self.aci = aci
         self.ari = kwargs.get("ari")
         self.aaci_bin = kwargs.get("aaci_bin")
         self.aaci_ascii = kwargs.get("aaci_ascii")
-        self.state = kwargs.get("state", LineState.SHOWTIME)
-        self.up = kwargs.get("up", 0)
-        self.down = kwargs.get("down", 0)
-        self.min_up = kwargs.get("min_up")
-        self.min_down = kwargs.get("min_down")
-        self.att_up = kwargs.get("att_up")
-        self.att_down = kwargs.get("att_down")
-        self.max_up = kwargs.get("max_up")
-        self.max_down = kwargs.get("max_down")
-        self.dsl_type = kwargs.get("dsl_type", DslType.OTHER)
-        self.data_link = kwargs.get("data_link", DataLink.ETHERNET)
-        self.encap1 = kwargs.get("encap1", Encap1.DOUBLE_TAGGED_ETHERNET)
-        self.encap2 = kwargs.get("encap2", Encap2.EOAAL5_LLC)
+        self.pon_type = kwargs.get("pon_type")
+        if self.pon_type:
+            # PON LINE ATTRIBUTES
+            self.ont_onu_avg_down = kwargs.get("ont_onu_ag_down")
+            self.ont_onu_peak_down = kwargs.get("ont_onu_peak_down")
+            self.ont_onu_max_up = kwargs.get("ont_onu_max_up")
+            self.ont_onu_ass_up = kwargs.get("ont_onu_ass_up")
+            self.pon_max_up = kwargs.get("pon_max_up")
+            self.pon_max_down = kwargs.get("pon_max_down")
+        else:
+            # DSL LINE ATTRIBUTES
+            self.state = kwargs.get("state", LineState.SHOWTIME)
+            self.up = kwargs.get("up", 0)
+            self.down = kwargs.get("down", 0)
+            self.min_up = kwargs.get("min_up")
+            self.min_down = kwargs.get("min_down")
+            self.att_up = kwargs.get("att_up")
+            self.att_down = kwargs.get("att_down")
+            self.max_up = kwargs.get("max_up")
+            self.max_down = kwargs.get("max_down")
+            self.dsl_type = kwargs.get("dsl_type", DslType.OTHER)
+            self.data_link = kwargs.get("data_link", DataLink.ETHERNET)
+            self.encap1 = kwargs.get("encap1", Encap1.DOUBLE_TAGGED_ETHERNET)
+            self.encap2 = kwargs.get("encap2", Encap2.EOAAL5_LLC)
+            # G.Fast attributes
+            self.etr_up = kwargs.get("etr_up")
+            self.etr_down = kwargs.get("etr_down")
+            self.attetr_up = kwargs.get("attetr_up")
+            self.attetr_down = kwargs.get("attetr_down")
+            self.gdr_up = kwargs.get("gdr_up")
+            self.gdr_down = kwargs.get("gdr_down")
+            self.attgdr_up = kwargs.get("attgdr_up")
+            self.attgdr_down = kwargs.get("attgdr_down")
+
 
     def __repr__(self):
         return "Subscriber(%s)" % (self.aci)
@@ -259,25 +359,42 @@ class Subscriber(object):
             tlvs.append(TLV(TlvType.AACI_BIN, self.aaci_bin))
         if self.aaci_ascii is not None:
             tlvs.append(TLV(TlvType.AACI_ASCII, self.aaci_ascii))
-        # DSL LINE ATTRIBUTES
-        line = [TLV(TlvType.TYPE, self.dsl_type)]
-        line.append(access_loop_enc(self.data_link, self.encap1, self.encap2))
-        line.append(TLV(TlvType.STATE, self.state))
-        if self.up is not None:
-            line.append(TLV(TlvType.UP, self.up))
-        if self.down is not None:
-            line.append(TLV(TlvType.DOWN, self.down))
-        if self.min_up is not None:
-            line.append(TLV(TlvType.MIN_UP, self.min_up))
-        if self.min_down is not None:
-            line.append(TLV(TlvType.MIN_DOWN, self.min_down))
-        if self.att_up is not None:
-            line.append(TLV(TlvType.ATT_UP, self.att_up))
-        if self.att_down is not None:
-            line.append(TLV(TlvType.ATT_DOWN, self.att_down))
-        if self.max_up is not None:
-            line.append(TLV(TlvType.MAX_UP, self.max_up))
-        if self.max_down is not None:
-            line.append(TLV(TlvType.MAX_DOWN, self.max_down))
-        tlvs.append(TLV(TlvType.LINE, line))
+        if self.pon_type is not None:
+            # PON LINE ATTRIBUTES
+            pon = [TLV(TlvType.PON_TYPE, self.pon_type)]
+            if self.ont_onu_avg_down is not None:
+                pon.append(TLV(TlvType.ONT_ONU_AVG_DOWN, self.ont_onu_avg_down))
+            if self.ont_onu_peak_down is not None:
+                pon.append(TLV(TlvType.ONT_ONU_PEAK_DOWN, self.ont_onu_peak_down))
+            if self.ont_onu_max_up is not None:
+                pon.append(TLV(TlvType.ONT_ONU_MAX_UP, self.ont_onu_max_up))
+            if self.ont_onu_ass_up is not None:
+                pon.append(TLV(TlvType.ONT_ONU_ASS_UP, self.ont_onu_ass_up))
+            if self.pon_max_up is not None:
+                pon.append(TLV(TlvType.PON_MAX_UP, self.pon_max_up))
+            if self.pon_max_down is not None:
+                pon.append(TLV(TlvType.PON_MAX_DOWN, self.pon_max_down))
+            tlvs.append(TLV(TlvType.PON, pon))
+        else:
+            # DSL LINE ATTRIBUTES
+            line = [TLV(TlvType.TYPE, self.dsl_type)]
+            line.append(access_loop_enc(self.data_link, self.encap1, self.encap2))
+            line.append(TLV(TlvType.STATE, self.state))
+            if self.up is not None:
+                line.append(TLV(TlvType.UP, self.up))
+            if self.down is not None:
+                line.append(TLV(TlvType.DOWN, self.down))
+            if self.min_up is not None:
+                line.append(TLV(TlvType.MIN_UP, self.min_up))
+            if self.min_down is not None:
+                line.append(TLV(TlvType.MIN_DOWN, self.min_down))
+            if self.att_up is not None:
+                line.append(TLV(TlvType.ATT_UP, self.att_up))
+            if self.att_down is not None:
+                line.append(TLV(TlvType.ATT_DOWN, self.att_down))
+            if self.max_up is not None:
+                line.append(TLV(TlvType.MAX_UP, self.max_up))
+            if self.max_down is not None:
+                line.append(TLV(TlvType.MAX_DOWN, self.max_down))
+            tlvs.append(TLV(TlvType.LINE, line))
         return (len(tlvs), mktlvs(tlvs))
