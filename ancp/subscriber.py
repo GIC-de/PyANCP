@@ -396,5 +396,22 @@ class Subscriber(object):
                 line.append(TLV(TlvType.MAX_UP, self.max_up))
             if self.max_down is not None:
                 line.append(TLV(TlvType.MAX_DOWN, self.max_down))
+            # G.Fast attributes
+            if self.etr_up is not None:
+                line.append(TLV(TlvType.ETR_UP, self.etr_up))
+            if self.etr_down is not None:
+                line.append(TLV(TlvType.ETR_DOWN, self.etr_down))
+            if self.attetr_up is not None:
+                line.append(TLV(TlvType.ATTETR_UP, self.attetr_up))
+            if self.attetr_down is not None:
+                line.append(TLV(TlvType.ATTETR_DOWN, self.attetr_down))
+            if self.gdr_up is not None:
+                line.append(TLV(TlvType.GDR_UP, self.gdr_up))
+            if self.gdr_down is not None:
+                line.append(TLV(TlvType.GDR_DOWN, self.gdr_down))
+            if self.attgdr_up is not None:
+                line.append(TLV(TlvType.ATTGDR_UP, self.attgdr_up))
+            if self.attgdr_down is not None:
+                line.append(TLV(TlvType.ATTGDR_DOWN, self.attgdr_down))
             tlvs.append(TLV(TlvType.LINE, line))
         return (len(tlvs), mktlvs(tlvs))
