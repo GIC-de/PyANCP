@@ -54,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyANCP'
-copyright = u'Copyright 2017 Christian Giese <cgiese@juniper.net>'
+copyright = u'Copyright 2017-2021, Christian Giese (GIc-de)'
 author = u'Christian Giese'
 
 # The version info for the project you're documenting, acts as replacement for

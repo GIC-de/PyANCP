@@ -7,8 +7,7 @@ version = '0.1.6'
 
 setup(name='PyANCP',
       version=version,
-      author='Christian Giese',
-      author_email='cgiese@juniper.net',
+      author='Christian Giese (GIC-de)',
       url='https://github.com/GIC-de/PyANCP',
       license='MIT',
       description='Python ANCP (RFC 6320) Client and Library',

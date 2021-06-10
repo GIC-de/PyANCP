@@ -1,6 +1,7 @@
 """ANCP Subscribers
 
-Copyright 2017 Christian Giese <cgiese@juniper.net>
+Copyright (C) 2017-2021, Christian Giese (GIC-de)
+SPDX-License-Identifier: MIT
 """
 from __future__ import print_function
 from __future__ import unicode_literals

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """ANCP Client Example
 
-Copyright 2017 Christian Giese <cgiese@juniper.net>
+Copyright (C) 2017-2021, Christian Giese (GIC-de)
+SPDX-License-Identifier: MIT
 """
 from ancp.client import Client
 from ancp.subscriber import Subscriber
