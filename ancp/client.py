@@ -12,7 +12,6 @@ from threading import Thread, Event, Lock
 import struct
 import socket
 import logging
-# import collections
 
 try:
     from collections.abc import Iterable
