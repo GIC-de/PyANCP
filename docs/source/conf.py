@@ -27,30 +27,10 @@ language = 'en'
 exclude_patterns = []
 
 pygments_style = 'sphinx'
-todo_include_todos = False
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
 
 htmlhelp_basename = 'PyANCPdoc'
-
-latex_elements = {
-}
-
-latex_documents = [
-    (master_doc, 'PyANCP.tex', u'PyANCP Documentation',
-     u'Christian Giese', 'manual'),
-]
-
-man_pages = [
-    (master_doc, 'pyancp', u'PyANCP Documentation',
-     [author], 1)
-]
-
-texinfo_documents = [
-    (master_doc, 'PyANCP', u'PyANCP Documentation',
-     author, 'PyANCP', 'One line description of project.',
-     'Miscellaneous'),
-]
 
 intersphinx_mapping = {'https://docs.python.org/': None}
