@@ -12,7 +12,11 @@ from threading import Thread, Event, Lock
 import struct
 import socket
 import logging
-import collections
+
+try:
+    from collections.abc import Iterable
+except ImportError:
+    from collections import Iterable
 
 log = logging.getLogger(__name__)
 
@@ -173,7 +177,7 @@ class Client(object):
         :param subscriber: collection of ANCP subscribers
         :type subscriber: [ancp.subscriber.Subscriber]
         """
-        if not isinstance(subscribers, collections.Iterable):
+        if not isinstance(subscribers, Iterable):
             subscribers = [subscribers]
         elif len(subscribers) == 0:
             raise ValueError("No Subscribers passed")
@@ -187,7 +191,7 @@ class Client(object):
         :param subscriber: collection of ANCP subscribers
         :type subscriber: [ancp.subscriber.Subscriber]
         """
-        if not isinstance(subscribers, collections.Iterable):
+        if not isinstance(subscribers, Iterable):
             subscribers = [subscribers]
         elif len(subscribers) == 0:
             raise ValueError("No Subscribers passed")
