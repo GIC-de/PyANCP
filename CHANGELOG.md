@@ -1,5 +1,11 @@
 # PyANCP
 
+## 0.1.7
+
++ fix collections iterable issue in python 3.10
++ convert client address parameters to string
++ add Copyright and SPDX-License-Identifier
+
 ## 0.1.6
 
 + create sender_name based on argument source_address
