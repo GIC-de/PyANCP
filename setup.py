@@ -3,7 +3,7 @@
 """
 from setuptools import setup, find_packages
 
-version = '0.1.6'
+version = '0.1.7'
 
 setup(name='PyANCP',
       version=version,
@@ -13,9 +13,10 @@ setup(name='PyANCP',
       description='Python ANCP (RFC 6320) Client and Library',
       long_description=open('README.rst').read(),
       classifiers=[
-       'Programming Language :: Python :: 2.7',
-       'Programming Language :: Python :: 3.2',
-       'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.8',
+          'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10'
       ],
       packages=find_packages(),
       zip_safe=True,

@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/GIC-de/PyANCP.svg?branch=master
-    :target: https://travis-ci.org/GIC-de/PyANCP
+.. image:: https://github.com/GIC-de/PyANCP/actions/workflows/python-test.yml/badge.svg
+    :target: https://github.com/GIC-de/PyANCP/actions/workflows/python-test.yml
 .. image:: https://coveralls.io/repos/github/GIC-de/PyANCP/badge.svg?branch=master
     :target: https://coveralls.io/github/GIC-de/PyANCP?branch=master
 .. image:: https://readthedocs.org/projects/pyancp/badge/?version=latest

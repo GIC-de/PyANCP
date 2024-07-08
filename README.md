@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/GIC-de/PyANCP.svg?branch=master)](https://travis-ci.org/GIC-de/PyANCP)
-[![Documentation Status](https://readthedocs.org/projects/pyancp/badge/?version=latest)](http://pyancp.readthedocs.io/en/latest/?badge=latest)
+[![Test Status](https://github.com/GIC-de/PyANCP/actions/workflows/python-test.yml/badge.svg)](https://github.com/GIC-de/PyANCP/actions/workflows/python-test.yml)
 [![Coverage Status](https://coveralls.io/repos/github/GIC-de/PyANCP/badge.svg?branch=master)](https://coveralls.io/github/GIC-de/PyANCP?branch=master)
+[![Documentation Status](https://readthedocs.org/projects/pyancp/badge/?version=latest)](http://pyancp.readthedocs.io/en/latest/?badge=latest)
 [![Version](https://img.shields.io/pypi/v/PyANCP.svg)](https://pypi.python.org/pypi/PyANCP)
 [![Downloads](https://img.shields.io/pypi/dm/PyANCP.svg)](https://pypi.python.org/pypi/PyANCP)
 [![Python Versions](https://img.shields.io/pypi/pyversions/PyANCP.svg)](https://pypi.python.org/pypi/PyANCP)

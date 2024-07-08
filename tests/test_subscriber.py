@@ -1,6 +1,6 @@
 """ANCP Subscriber Tests
 
-Copyright (C) 2017-2021, Christian Giese (GIC-de)
+Copyright (C) 2017-2024, Christian Giese (GIC-de)
 SPDX-License-Identifier: MIT
 """
 from ancp.subscriber import *
