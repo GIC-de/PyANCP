@@ -66,6 +66,7 @@ class ResultCodes(object):
 
 class Capabilities(object):
     TOPO = 1
+    CONFIG = 2
     OAM = 4
 
 
@@ -398,7 +399,7 @@ class Client(object):
         off += 4
         return b + body
 
-    def _send_port_updwn(self, message_type, tech_type, subscribers):
+    def _send_port_updwn(self, message_type, tech_type, subscribers, result_field=ResultFields.Ignore, result_code=ResultCodes.NoResult):
         msg = bytearray()
         for subscriber in subscribers:
             try:
@@ -412,8 +413,7 @@ class Client(object):
             off += 4
             struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
             off += 4
-            msg += self._mkgeneral(message_type, ResultFields.Nack,
-                                   ResultCodes.NoResult, b + tlvs)
+            msg += self._mkgeneral(message_type, result_field, result_code, b + tlvs)
         if len(msg) == 0:
             raise ValueError("No valid Subscriber passed")
         with self._tx_lock:
