@@ -44,7 +44,7 @@ def ancp_client():
     def tx(msg):
         client._tx_bytes += msg
 
-    client.socket.send = tx
+    client.socket.sendall = tx
     return client
 
 
