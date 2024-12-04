@@ -287,7 +287,7 @@ class Client(object):
         log.debug("send adjanecy message with code %s", (code))
         b = self._mkadjac(MessageType.ADJACENCY, self.timer * 10, m, code)
         with self._tx_lock:
-            self.socket.send(b)
+            self.socket.sendall(b)
 
     def _send_syn(self):
         self._send_adjac(0, MessageCode.SYN)
@@ -417,4 +417,4 @@ class Client(object):
         if len(msg) == 0:
             raise ValueError("No valid Subscriber passed")
         with self._tx_lock:
-            self.socket.send(msg)
+            self.socket.sendall(msg)
