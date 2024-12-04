@@ -10,15 +10,15 @@ import time
 import logging
 import sys
 
-# GPON PROFILE with all values set to 1G
+# GPON PROFILE
 GPON_1G = {
     "pon_type": PonType.GPON,
     "ont_onu_avg_down": 1000000,
     "ont_onu_peak_down": 1000000,
     "ont_onu_max_up": 1000000,
     "ont_onu_ass_up": 1000000,
-    "pon_max_up": 1000000,
-    "pon_max_down": 1000000,
+    "pon_max_up": 1200000,
+    "pon_max_down": 2400000,
 }
 
 # setup logging to stdout
