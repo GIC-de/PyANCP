@@ -1,5 +1,8 @@
 # PyANCP
 
++ fix issue where not that all bytes are sent to the ANCP neighbor
++ add support for draft-lihawi-ancp-protocol-access-extension-13
+
 ## 0.1.7
 
 + fix collections iterable issue in python 3.10

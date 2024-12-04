@@ -21,7 +21,7 @@ project = u'PyANCP'
 copyright = u'Copyright 2017-2024, Christian Giese (GIc-de)'
 author = u'Christian Giese'
 version = u'0.1'
-release = u'0.1.7'
+release = u'0.1.8'
 
 language = 'en'
 exclude_patterns = []

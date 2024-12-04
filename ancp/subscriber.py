@@ -48,40 +48,66 @@ class PonType(object):
 
 
 class TlvType(object):
-    "TLV Types"
-    ACI = 0x0001                # Access-Loop-Circuit-ID
-    ARI = 0x0002                # Access-Loop-Remote-ID
-    AACI_ASCII = 0x0003         # Access-Aggregation-Circuit-ID-ASCII
-    LINE = 0x0004
-    AACI_BIN = 0x0006           # Access-Aggregation-Circuit-ID-Binary
-    UP = 0x0081
-    DOWN = 0x0082
-    MIN_UP = 0x0083
-    MIN_DOWN = 0x0084
-    ATT_UP = 0x0085
-    ATT_DOWN = 0x0086
-    MAX_UP = 0x0087
-    MAX_DOWN = 0x0088
-    STATE = 0x008f
-    ACC_LOOP_ENC = 0x0090
-    TYPE = 0x0091
-    ETR_UP = 0x009b             # Expected Throughput (ETR) upstream
-    ETR_DOWN = 0x009c           # Expected Throughput (ETR) downstream
-    ATTETR_UP = 0x009d          # Attainable Expected Throughput (ATTETR) upstream
-    ATTETR_DOWN = 0x009e        # Attainable Expected Throughput (ATTETR) downstream
-    GDR_UP = 0x009f             # Gamma data rate (GDR) upstream
-    GDR_DOWN = 0x00a0           # Gamma data rate (GDR) downstream
-    ATTGDR_UP = 0x00a1          # Attainable Gamma data rate (ATTGDR) upstream
-    ATTGDR_DOWN = 0x00a2        # Attainable Gamma data rate (ATTGDR) downstream
-    PON = 0x0012                # PON-Access-Line-Attributes
-    PON_TYPE = 0x0092           # PON-Access-Type
-    ONT_ONU_AVG_DOWN = 0x0093   # ONT/ONU-Average-Data-Rate-Downstream
-    ONT_ONU_PEAK_DOWN = 0x0094  # ONT/ONU-Peak-Data-Rate-Downstream
-    ONT_ONU_MAX_UP = 0x0095     # ONT/ONU-Maximum-Data-Rate-Upstream
-    ONT_ONU_ASS_UP = 0x0096     # ONT/ONU-Assured-Data-Rate-Upstream
-    PON_MAX_UP = 0x0097         # PON-Tree-Maximum-Data-Rate-Upstream
-    PON_MAX_DOWN = 0x0098       # PON-Tree-Maximum-Data-Rate-Downstream
-
+    "TLV Types (https://www.iana.org/assignments/ancp/ancp.xhtml#tlv-types)"
+    ACI = 0x0001                        # Access-Loop-Circuit-ID
+    ARI = 0x0002                        # Access-Loop-Remote-ID
+    AACI_ASCII = 0x0003                 # Access-Aggregation-Circuit-ID-ASCII
+    LINE = 0x0004                       # DSL-Line-Attributes
+    SERVICE_PROFILE = 0x0005            # Service-Profile-Name
+    AACI_BIN = 0x0006                   # Access-Aggregation-Circuit-ID-Binary
+    OAM_LOOPBACK_TEST_PARAM = 0x0007    # OAM-Loopback-Test-Parameters
+    OPAQUE_DATA = 0x0008                # Opaque-Data
+    OAM_LOOPBACK_TEST_RESPONSE= 0x0009  # OAM-Loopback-Test-Response-String
+    COMMAND = 0x0011                    # Command
+    PON = 0x0012                        # PON-Access-Line-Attributes
+    MC_SERVICE_PROFILE = 0x0013         # Multicast-Service-Profile	
+    BW_ALLOCATION = 0x0015              # Bandwidth-Allocation	
+    BW_REQUEST = 0x0016                 # Bandwidth-Request	
+    MC_SERVICE_PROFILE_NAME = 0x0018    # Multicast-Service-Profile-Name
+    MC_FLOW = 0x0019                    # Multicast-Flow
+    LIST_ACTION = 0x0021                # List-Action
+    SEQ_NUMBER = 0x0022                 # Sequence-Number
+    WHITE_LIST_CAC = 0x0024             # White-List-CAC
+    MREPCTL_CAC = 0x0025                # MRepCtl-CAC
+    UP = 0x0081                         # Actual-Net-Data-Rate-Upstream
+    DOWN = 0x0082                       # Actual-Net-Data-Rate-Downstream
+    MIN_UP = 0x0083                     # Minimum-Net-Data-Rate-Upstream
+    MIN_DOWN = 0x0084                   # Minimum-Net-Data-Rate-Downstream
+    ATT_UP = 0x0085                     # Attainable-Net-Data-Rate-Upstream
+    ATT_DOWN = 0x0086                   # Attainable-Net-Data-Rate-Downstream
+    MAX_UP = 0x0087                     # Maximum-Net-Data-Rate-Upstream
+    MAX_DOWN = 0x0088                   # Maximum-Net-Data-Rate-Downstream
+    MIN_NLPDR_UP = 0x0089               # Minimum-Net-Low-Power-Data-Rate-Upstream
+    MIN_NLPDR_DOWN = 0x008a             # Minimum-Net-Low-Power-Data-Rate-Downstream
+    MAX_INT_DELAY_UP = 0x008b           # Maximum-Interleaving-Delay-Upstream
+    ACT_INT_DELAY_UP = 0x008c           # Actual-Interleaving-Delay-Upstream
+    MAX_INT_DELAY_DOWN = 0x008d         # Maximum-Interleaving-Delay-Downstream
+    ACT_INT_DELAY_DOWN = 0x008e         # Actual-Interleaving-Delay-Downstream
+    STATE = 0x008f                      # DSL-Line-State
+    ACC_LOOP_ENC = 0x0090               # Access-Loop-Encapsulation
+    TYPE = 0x0091                       # DSL-Type
+    REQ_SRC_IP = 0x0092                 # Request-Source-IP
+    REQ_SRC_MAC = 0x0093                # Request-Source-MAC
+    REP_BUF_TIME = 0x0094               # Report-Buffering-Time
+    COM_BW = 0x0095                     # Committed-Bandwidth
+    REQ_SRC_ID = 0x0096                 # Request-Source-Device-Id
+    PON_TYPE = 0x0097                   # PON-Access-Type
+    ETR_UP = 0x009b                     # Expected Throughput (ETR) upstream
+    ETR_DOWN = 0x009c                   # Expected Throughput (ETR) downstream
+    ATTETR_UP = 0x009d                  # Attainable Expected Throughput (ATTETR) upstream
+    ATTETR_DOWN = 0x009e                # Attainable Expected Throughput (ATTETR) downstream
+    GDR_UP = 0x009f                     # Gamma data rate (GDR) upstream
+    GDR_DOWN = 0x00a0                   # Gamma data rate (GDR) downstream
+    ATTGDR_UP = 0x00a1                  # Attainable Gamma data rate (ATTGDR) upstream
+    ATTGDR_DOWN = 0x00a2                # Attainable Gamma data rate (ATTGDR) downstream
+    ONT_ONU_AVG_DOWN = 0x00b0           # ONT/ONU-Average-Data-Rate-Downstream
+    ONT_ONU_PEAK_DOWN = 0x00b1          # ONT/ONU-Peak-Data-Rate-Downstream
+    ONT_ONU_MAX_UP = 0x00b2             # ONT/ONU-Maximum-Data-Rate-Upstream
+    ONT_ONU_ASS_UP = 0x00b3             # ONT/ONU-Assured-Data-Rate-Upstream
+    PON_MAX_UP = 0x00b4                 # PON-Tree-Maximum-Data-Rate-Upstream
+    PON_MAX_DOWN = 0x00b5               # PON-Tree-Maximum-Data-Rate-Downstream
+    STATUS_INFO = 0x0106                # Status-Info
+    TARGET = 0x1000                     # Target (single access line variant)
 
 # Access-Loop-Encapsulation
 class DataLink(object):
@@ -272,7 +298,7 @@ class Subscriber(object):
     :param attgdr_down: Attainable Gamma data rate (ATTGDR) downstream (kbits/s)
     :type attgdr_down: int
 
-    **PON Line Attributes (draft-ietf-ancp-protocol-access-extension-06):**
+    **PON Line Attributes (draft-lihawi-ancp-protocol-access-extension-13):**
 
     The following parameters are valid for PON subscribers only. The parameter
     `pon_type` must be set to create a PON subscriber.

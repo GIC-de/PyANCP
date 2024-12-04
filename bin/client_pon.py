@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """ANCP Client Example for PON extensions (draft-ietf-ancp-protocol-access-extension-06)
 
-Copyright 2017 Christian Giese <cgiese@juniper.net>
+Copyright (C) 2017-2024, Christian Giese (GIC-de)
+SPDX-License-Identifier: MIT
 """
 from ancp.client import *
 from ancp.subscriber import *
