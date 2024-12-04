@@ -45,4 +45,5 @@ Author: Christian Giese and Wolfgang Beck
 
 Contributors:
 - Istvan Ruzman
+- Sören Busse
 - Stefan Lieberth
