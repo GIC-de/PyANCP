@@ -222,6 +222,9 @@ class Client(object):
                         log.warning("MSG_WAITALL failed")
                     log.debug("rest received len(b) = %d", len(b))
                     (ver, mtype, var) = struct.unpack_from("!BBH", b, 0)
+                    if ver != self.version:
+                        log.warning("ignoring unsupported ANCP version %d", ver)
+                        continue
                     s0 = self.state
                     if mtype == MessageType.ADJACENCY:
                         self._handle_adjacency(var, b)
@@ -361,8 +364,8 @@ class Client(object):
         m = var & 0x80
         code = var & 0x7f
         if m == 0:
-            log.error("received M flag 0 in AN mode")
-            raise RuntimeError("Trying to synchronize with other AN")
+            log.warning("ignoring adjacency message with M flag 0 in AN mode")
+            return
         self.receiver_name = struct.unpack_from("!BBBBBB", b, 4)
         self.receiver_instance = struct.unpack_from("!I", b, 24)[0] & 16777215
         if code == MessageCode.SYN:
@@ -391,8 +394,12 @@ class Client(object):
         off += 4
         struct.pack_into("!BBH", b, off, self.version, message_type, (result << 12) | result_code)
         off += 4
-        struct.pack_into("!I", b, off, (partition_id << 24) | self.transaction_id)
-        self.transaction_id += 1
+        if message_type in (MessageType.PORT_UP, MessageType.PORT_DOWN):
+            transaction_id = 0
+        else:
+            transaction_id = self.transaction_id
+            self.transaction_id += 1
+        struct.pack_into("!I", b, off, (partition_id << 24) | transaction_id)
         off += 4
         struct.pack_into("!HH", b, off, 0x8001, len(b) - 4 + len(body))
         off += 4
@@ -401,18 +408,14 @@ class Client(object):
     def _send_port_updwn(self, message_type, tech_type, subscribers):
         msg = bytearray()
         for subscriber in subscribers:
-            try:
-                num_tlvs, tlvs = subscriber.tlvs
-            except:
-                log.warning("subscriber is not of type ancp.subscriber.Subscriber: skip")
-                continue
+            num_tlvs, tlvs = subscriber.tlvs
             b = bytearray(28)
             off = 20
             struct.pack_into("!xBBx", b, off, message_type, tech_type)
             off += 4
             struct.pack_into("!HH", b, off, num_tlvs, len(tlvs))
             off += 4
-            msg += self._mkgeneral(message_type, ResultFields.Nack,
+            msg += self._mkgeneral(message_type, ResultFields.Ignore,
                                    ResultCodes.NoResult, b + tlvs)
         if len(msg) == 0:
             raise ValueError("No valid Subscriber passed")

@@ -10,6 +10,24 @@
 PyANCP
 ======
 
+After installing PyANCP, the bounded test client ``bin/ancp_test.py`` supports
+DSL and PON. It requires Python 3.3 or later and can be run from the checkout
+with ``PYTHONPATH=.``.
+``--draft-version NN`` selects the
+`draft-lihawi <https://datatracker.ietf.org/doc/draft-lihawi-ancp-protocol-access-extension/>`_
+TLV numbering (default ``01``).
+PON drafts ``00``-``01`` use type ``0x0092`` and rates ``0x0093``-``0x0098``;
+``02`` uses ``0x1001`` and ``0x1002``-``0x1007``; ``03`` and later use
+``0x0097`` and ``0x00b0``-``0x00b5``. DSL ETR/ATTETR/GDR/ATTGDR attributes use
+``0x1008``-``0x100f`` for draft ``02`` and ``0x009b``-``0x00a2`` otherwise.
+Published drafts through ``14`` were checked; later versions use the ``03``
+numbering provisionally. Rates are in kbit/s.
+
+``PonSubscriber`` accepts ``pon_type``, ``ont_onu_avg_down``,
+``ont_onu_peak_down``, ``ont_onu_max_up``, ``ont_onu_ass_up``, ``pon_max_up``
+and ``pon_max_down``. ``Subscriber`` accepts upstream and downstream keyword
+arguments for ETR, ATTETR, GDR and ATTGDR.
+
 Python ANCP (RFC 6320) client and library.
 PyANCP requires Python 2.7 or later, or Python 3.2 or later.
 
