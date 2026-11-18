@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 from __future__ import print_function
 from __future__ import unicode_literals
 from builtins import bytes
+from numbers import Integral
+import re
 import struct
 import logging
 
@@ -28,6 +30,12 @@ class DslType(object):
     VDSL2 = 5
     SDSL = 6
     OTHER = 0
+    GFAST = 8
+    VDSL2_ANNEX_Q = 9
+    SDSL_BONDED = 10
+    VDSL2_BONDED = 11
+    GFAST_BONDED = 12
+    VDSL2_ANNEX_Q_BONDED = 13
 
 
 class TlvType(object):
@@ -48,6 +56,15 @@ class TlvType(object):
     STATE = 0x008f
     ACC_LOOP_ENC = 0x0090
     TYPE = 0x0091
+    PON_LINE = 0x0012
+    ETR_UP = 0x009b
+    ETR_DOWN = 0x009c
+    ATTETR_UP = 0x009d
+    ATTETR_DOWN = 0x009e
+    GDR_UP = 0x009f
+    GDR_DOWN = 0x00a0
+    ATTGDR_UP = 0x00a1
+    ATTGDR_DOWN = 0x00a2
 
 
 # Access-Loop-Encapsulation
@@ -87,7 +104,7 @@ class TLV(object):
         self.val = val  # value
         self.len = 0    # length
         self.off = 0    # offset (lenth + padding)
-        if isinstance(val, int):
+        if isinstance(val, Integral):
             # int
             self.len = 4
             self.off = 4
@@ -129,7 +146,7 @@ def mktlvs(tlvs):
             struct.pack_into("!HH", b, off, t.type, t.off)
             off += 4
             for s in t.val:
-                if isinstance(s.val, int):
+                if isinstance(s.val, Integral):
                     struct.pack_into("!HHI", b, off, s.type, s.len, s.val)
                 else:
                     fmt = "!HH%ds" % s.len
@@ -137,7 +154,7 @@ def mktlvs(tlvs):
                 off += 4 + s.off
         else:
             # tlv
-            if isinstance(t.val, int):
+            if isinstance(t.val, Integral):
                 # int
                 struct.pack_into("!HHI", b, off, t.type, t.len, t.val)
             elif isinstance(t.val, tuple):
@@ -173,6 +190,22 @@ def access_loop_enc(data_link, encap1, encap2):
     return tlv
 
 
+def unsigned_rate_tlv(kind, value):
+    if not isinstance(value, Integral) or isinstance(value, bool) or not 0 <= value <= 0xffffffff:
+        raise ValueError("ANCP attribute must be an unsigned 32-bit integer")
+    return TLV(kind, value)
+
+
+def parse_draft_version(value):
+    try:
+        valid = re.match(r"^[0-9]{2}\Z", value)
+    except TypeError:
+        valid = None
+    if valid is None:
+        raise ValueError("draft_version must be two digits from 00 to 99")
+    return value
+
+
 # ANCP SUBSCRIBER -------------------------------------------------------------
 
 class Subscriber(object):
@@ -204,6 +237,8 @@ class Subscriber(object):
     :type max_up: int
     :param max_down: Maximum-Net-Data-Rate-Downstream
     :type max_down: int
+    :param draft_version: draft-lihawi revision as two digits (default: 01)
+    :type draft_version: str
     :param dsl_type: DSL-Type
     :type dsl_type: ancp.subscriber.DslType
     :param data_link: Access-Loop-Encapsulation - Data Link
@@ -214,6 +249,7 @@ class Subscriber(object):
     :type encap2: ancp.subscriber.Encap2
     """
     def __init__(self, aci, **kwargs):
+        self.draft_version = parse_draft_version(kwargs.get("draft_version", "01"))
         self.aci = aci
         self.ari = kwargs.get("ari")
         self.aaci_bin = kwargs.get("aaci_bin")
@@ -227,6 +263,14 @@ class Subscriber(object):
         self.att_down = kwargs.get("att_down")
         self.max_up = kwargs.get("max_up")
         self.max_down = kwargs.get("max_down")
+        self.etr_up = kwargs.get("etr_up")
+        self.etr_down = kwargs.get("etr_down")
+        self.attetr_up = kwargs.get("attetr_up")
+        self.attetr_down = kwargs.get("attetr_down")
+        self.gdr_up = kwargs.get("gdr_up")
+        self.gdr_down = kwargs.get("gdr_down")
+        self.attgdr_up = kwargs.get("attgdr_up")
+        self.attgdr_down = kwargs.get("attgdr_down")
         self.dsl_type = kwargs.get("dsl_type", DslType.OTHER)
         self.data_link = kwargs.get("data_link", DataLink.ETHERNET)
         self.encap1 = kwargs.get("encap1", Encap1.DOUBLE_TAGGED_ETHERNET)
@@ -250,8 +294,7 @@ class Subscriber(object):
                 raise ValueError("invalid value for aaci_bin")
         self._aaci_bin = value
 
-    @property
-    def tlvs(self):
+    def _identity_tlvs(self):
         tlvs = [TLV(TlvType.ACI, self.aci)]
         if self.ari is not None:
             tlvs.append(TLV(TlvType.ARI, self.ari))
@@ -259,6 +302,11 @@ class Subscriber(object):
             tlvs.append(TLV(TlvType.AACI_BIN, self.aaci_bin))
         if self.aaci_ascii is not None:
             tlvs.append(TLV(TlvType.AACI_ASCII, self.aaci_ascii))
+        return tlvs
+
+    @property
+    def tlvs(self):
+        tlvs = self._identity_tlvs()
         # DSL LINE ATTRIBUTES
         line = [TLV(TlvType.TYPE, self.dsl_type)]
         line.append(access_loop_enc(self.data_link, self.encap1, self.encap2))
@@ -279,5 +327,55 @@ class Subscriber(object):
             line.append(TLV(TlvType.MAX_UP, self.max_up))
         if self.max_down is not None:
             line.append(TLV(TlvType.MAX_DOWN, self.max_down))
+        rate_offset = 0x1008 - TlvType.ETR_UP if self.draft_version == "02" else 0
+        for kind, value in (
+            (TlvType.ETR_UP, self.etr_up),
+            (TlvType.ETR_DOWN, self.etr_down),
+            (TlvType.ATTETR_UP, self.attetr_up),
+            (TlvType.ATTETR_DOWN, self.attetr_down),
+            (TlvType.GDR_UP, self.gdr_up),
+            (TlvType.GDR_DOWN, self.gdr_down),
+            (TlvType.ATTGDR_UP, self.attgdr_up),
+            (TlvType.ATTGDR_DOWN, self.attgdr_down),
+        ):
+            if value is not None:
+                line.append(unsigned_rate_tlv(kind + rate_offset, value))
         tlvs.append(TLV(TlvType.LINE, line))
+        return (len(tlvs), mktlvs(tlvs))
+
+
+class PonSubscriber(Subscriber):
+    """PON access line using draft-lihawi revision-specific attributes."""
+
+    def __init__(self, aci, draft_version="01", **kwargs):
+        super(PonSubscriber, self).__init__(aci, draft_version=draft_version, **kwargs)
+        self.pon_type = kwargs.get("pon_type", 0)
+        self.ont_onu_avg_down = kwargs.get("ont_onu_avg_down")
+        self.ont_onu_peak_down = kwargs.get("ont_onu_peak_down")
+        self.ont_onu_max_up = kwargs.get("ont_onu_max_up")
+        self.ont_onu_ass_up = kwargs.get("ont_onu_ass_up")
+        self.pon_max_up = kwargs.get("pon_max_up")
+        self.pon_max_down = kwargs.get("pon_max_down")
+
+    @property
+    def tlvs(self):
+        tlvs = self._identity_tlvs()
+        if self.draft_version in ("00", "01"):
+            pon_type, first_rate = 0x0092, 0x0093
+        elif self.draft_version == "02":
+            pon_type, first_rate = 0x1001, 0x1002
+        else:
+            pon_type, first_rate = 0x0097, 0x00b0
+        line = [unsigned_rate_tlv(pon_type, self.pon_type)]
+        for offset, value in enumerate((
+            self.ont_onu_avg_down,
+            self.ont_onu_peak_down,
+            self.ont_onu_max_up,
+            self.ont_onu_ass_up,
+            self.pon_max_up,
+            self.pon_max_down,
+        )):
+            if value is not None:
+                line.append(unsigned_rate_tlv(first_rate + offset, value))
+        tlvs.append(TLV(TlvType.PON_LINE, line))
         return (len(tlvs), mktlvs(tlvs))

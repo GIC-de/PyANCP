@@ -9,6 +9,27 @@
 
 # PyANCP
 
+## ANCP test client
+
+After installing PyANCP, run `python3 bin/ancp_test.py --help` for a bounded
+Port Up/Down test. From the checkout, `PYTHONPATH=. python3 bin/ancp_test.py
+--help` also works without installation. The client requires Python 3.3 or
+later. Use
+`--draft-version NN` to select the
+[draft-lihawi](https://datatracker.ietf.org/doc/draft-lihawi-ancp-protocol-access-extension/)
+TLV numbering (default `01`).
+PON drafts `00`-`01` use type `0x0092` and rates `0x0093`-`0x0098`;
+`02` uses `0x1001` and `0x1002`-`0x1007`; `03` and later use `0x0097`
+and `0x00b0`-`0x00b5`. DSL ETR/ATTETR/GDR/ATTGDR attributes use
+`0x1008`-`0x100f` for draft `02` and `0x009b`-`0x00a2` otherwise.
+The published drafts through `14` were checked; later versions use the
+`03` numbering provisionally. Rates are in kbit/s.
+
+`PonSubscriber` accepts `pon_type`, `ont_onu_avg_down`, `ont_onu_peak_down`,
+`ont_onu_max_up`, `ont_onu_ass_up`, `pon_max_up` and `pon_max_down`.
+`Subscriber` accepts `etr_up/down`, `attetr_up/down`, `gdr_up/down` and
+`attgdr_up/down` as separate upstream and downstream keyword arguments.
+
 Python ANCP (RFC 6320) client and library.
 PyANCP requires Python 2.7 or later, or Python 3.2 or later.
 

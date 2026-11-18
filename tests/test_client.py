@@ -75,6 +75,7 @@ def test_port_up(ancp_client):
     for s in subscribers:
         length, code = struct.unpack_from("!HxB", msg, 2 + off)
         assert code == MessageType.PORT_UP
+        assert struct.unpack_from("!HI", msg, 6 + off) == (0, 0)
         off += length + 4
     assert len(msg) == off
 
@@ -92,6 +93,7 @@ def test_port_down(ancp_client):
     for s in subscribers:
         length, code = struct.unpack_from("!HxB", msg, 2 + off)
         assert code == MessageType.PORT_DOWN
+        assert struct.unpack_from("!HI", msg, 6 + off) == (0, 0)
         off += length + 4
     assert len(msg) == off
 
@@ -104,3 +106,32 @@ def test_disconnect(ancp_client):
     assert code == MessageCode.RSTACK
     assert ancp_client.established.is_set() == False
     assert ancp_client.state != AdjacencyState.ESTAB
+
+
+def test_wrong_m_flag_is_ignored_without_changing_adjacency(caplog):
+    client = Client(address="1.2.3.4")
+    client.state = AdjacencyState.SYNSENT
+    packet = client._mkadjac(MessageType.ADJACENCY, client.timer * 10, 0, MessageCode.SYNACK)
+    _, _, _, _, var = struct.unpack_from("!HHBBH", packet)
+
+    client._handle_adjacency(var, packet[4:])
+
+    assert client.state == AdjacencyState.SYNSENT
+    assert client.receiver_name == (0, 0, 0, 0, 0, 0)
+    assert "M flag" in caplog.text
+
+
+def test_unsupported_version_is_ignored_without_establishing_adjacency(caplog):
+    client = Client(address="1.2.3.4")
+    client.socket = MagicMock()
+    client.state = AdjacencyState.SYNSENT
+    packet = client._mkadjac(MessageType.ADJACENCY, client.timer * 10, 1, MessageCode.SYNACK)
+    packet[4] = VERSION_RFC - 1
+    chunks = iter((packet[:4], packet[4:], b""))
+    client._recvall = lambda _: next(chunks)
+
+    client._handle()
+
+    assert client.state == AdjacencyState.SYNSENT
+    client.socket.sendall.assert_not_called()
+    assert "unsupported ANCP version" in caplog.text
